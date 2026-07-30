@@ -32,10 +32,15 @@ resizeCanvas();
 // 當使用者拖拉改變視窗大小時，自動觸發重新計算
 window.addEventListener('resize',resizeCanvas);
 
+// 1. 儲存當前的畫筆狀態
+ctx.save();
+// 2. 設定發光/陰影屬性
+ctx.shadowColor ='rgba(215,160,80,0.6)';
+ctx.shadowBlur = 30;
 //上面宣告完成後，底下是實際進入繪製階段
 ctx.beginPath();
 // 1. 設定線條顏色（RGBA: 紅, 綠, 藍, 透明度）
-ctx.strokeStyle = 'rgb(235,190,110,0.6)';
+ctx.strokeStyle = 'rgba(235,190,110,0.6)';
 // 2. 設定線條粗細 (單位為像素 px)
 ctx.lineWidth = 6;
 // 3. 設定線條端點形狀 ('round' 代表圓潤端點)
@@ -43,16 +48,18 @@ ctx.lineCap = 'round';
 ctx.moveTo(cx,0);
 ctx.lineTo(cx, canvas.height);
 ctx.stroke();
+// 4. 還原畫筆狀態 (取消 shadowBlur 避免影響後續繪圖)
+ctx.restore();
 
 ctx.beginPath();
-ctx.strokeStyle = 'rgb(255,255,255,0.4)';
+ctx.strokeStyle = 'rgba(255,255,255,0.4)';
 ctx.lineWidth = 60;
 ctx.moveTo(0, canvas.height * 0.75);
 ctx.lineTo(cx * 2, canvas.height * 0.75);
 ctx.stroke();
 
 ctx.beginPath();
-ctx.strokeStyle = 'rgb(255,255,255,0.4)';
+ctx.strokeStyle = 'rgba(255,255,255,0.4)';
 ctx.lineWidth = 60;
 ctx.moveTo(0, canvas.height * 0.75);
 ctx.lineTo(cx * 2, canvas.height * 0.75);
