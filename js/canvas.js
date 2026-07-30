@@ -29,5 +29,13 @@ function resizeCanvas() {
 
 // 頁面初次載入時執行一次
 resizeCanvas();
-
+// 當使用者拖拉改變視窗大小時，自動觸發重新計算
 windows.addEventListener('resize',resizeCanvas);
+
+//上面宣告完成後，底下是實際進入繪製階段
+ctx.beginPath();
+ctx.moveTo(cx,0);
+ctx.lineTo(cx, canvas.height;
+ctx.stroke();
+)
+
