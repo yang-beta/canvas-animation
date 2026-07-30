@@ -38,7 +38,7 @@ ctx.moveTo(cx,0);
 ctx.lineTo(cx, canvas.height);
 ctx.stroke();
 
-ctx.beginPath();
+//ctx.beginPath();
 ctx.moveTo(0, canvas.height * 0.75);
 ctx.lineTo(cx * 2, canvas.height * 0.75);
 ctx.stroke();
