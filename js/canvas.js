@@ -45,7 +45,14 @@ ctx.lineTo(cx, canvas.height);
 ctx.stroke();
 
 ctx.beginPath();
-ctx.strokeStyle = 'rgb(255,255,255,0.6)';
+ctx.strokeStyle = 'rgb(255,255,255,0.4)';
+ctx.lineWidth = 60;
+ctx.moveTo(0, canvas.height * 0.75);
+ctx.lineTo(cx * 2, canvas.height * 0.75);
+ctx.stroke();
+
+ctx.beginPath();
+ctx.strokeStyle = 'rgb(255,255,255,0.4)';
 ctx.lineWidth = 60;
 ctx.moveTo(0, canvas.height * 0.75);
 ctx.lineTo(cx * 2, canvas.height * 0.75);
