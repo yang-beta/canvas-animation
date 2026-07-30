@@ -35,7 +35,7 @@ windows.addEventListener('resize',resizeCanvas);
 //上面宣告完成後，底下是實際進入繪製階段
 ctx.beginPath();
 ctx.moveTo(cx,0);
-ctx.lineTo(cx, canvas.height;
+ctx.lineTo(cx, canvas.height);
 ctx.stroke();
 )
 
