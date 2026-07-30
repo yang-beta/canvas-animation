@@ -38,4 +38,8 @@ ctx.moveTo(cx,0);
 ctx.lineTo(cx, canvas.height);
 ctx.stroke();
 
+ctx.beginPath();
+ctx.moveTo(0,canvas.height*0.75);
+ctx.lineTo(viewWidth, canvas.height);
+ctx.stroke();
 
