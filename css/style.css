@@ -1,1 +1,20 @@
+/* css/style.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
+body {
+    background-color: #1a1a1a; /* 深炭灰背景，襯托金光 */
+    overflow: hidden;         /* 隱藏滾動條 */
+    width: 100vw;
+    height: 100vh;
+}
+
+#CanvasAnime {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
