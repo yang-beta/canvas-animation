@@ -39,7 +39,7 @@ window.addEventListener('resize',resizeCanvas);
 //ctx.stroke();
 
 ctx.beginPath();
-ctx.moveTo(0,canvas.height*0.75);
+ctx.moveTo(0, canvas.height * 0.75);
 ctx.lineTo(viewWidth, canvas.height);
 ctx.stroke();
 
