@@ -37,5 +37,5 @@ ctx.beginPath();
 ctx.moveTo(cx,0);
 ctx.lineTo(cx, canvas.height);
 ctx.stroke();
-)
+
 
