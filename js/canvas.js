@@ -35,7 +35,7 @@ window.addEventListener('resize',resizeCanvas);
 //上面宣告完成後，底下是實際進入繪製階段
 ctx.beginPath();
 // 1. 設定線條顏色（RGBA: 紅, 綠, 藍, 透明度）
-ctx.strokeStyle = 'rgb(215,160,80,0.8)';
+ctx.strokeStyle = 'rgb(235,190,110,0.6)';
 // 2. 設定線條粗細 (單位為像素 px)
 ctx.lineWidth = 6;
 // 3. 設定線條端點形狀 ('round' 代表圓潤端點)
