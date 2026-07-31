@@ -147,4 +147,4 @@ const p ={
     color: 'red'
 };
 
-ctx.arc(500,300,10,0, Math.PI * 2);
+ctx.arc(p.x,p.y,p.size,0, Math.PI * 2);
