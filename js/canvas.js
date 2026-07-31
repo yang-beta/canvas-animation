@@ -98,3 +98,26 @@ ctx.stroke();
 
 ctx.restore();
 
+//三條光束進階寫法
+// 1. 定義畫光束的通用工具函式
+function drawBeam(x, width, color, blur) {
+    ctx.save(); 
+    ctx.shadowColor = color; 
+    ctx.shadowBlur = blur;
+    ctx.beginPath();
+    ctx.lineWidth = width;
+    ctx.strokeStyle = color;
+    ctx.lineCap = 'round';
+    
+    // 繪製線條
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height * 0.65);
+    ctx.stroke();
+    
+    ctx.restore();
+}
+
+// 2. 呼叫工具函式，輕鬆畫出三條線！
+drawBeam(cx, 10, 'rgba(255, 250, 230, 0.9)', 35);      // 中間主光束
+drawBeam(cx - 40, 4, 'rgba(215, 160, 80, 0.5)', 15);   // 左側光束
+drawBeam(cx + 40, 4, 'rgba(215, 160, 80, 0.5)', 15);   // 右側光束
