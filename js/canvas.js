@@ -136,7 +136,7 @@ console.log(singleParticle.size);
 const goldBeam ={
     offset: -50,
     width: 6,
-    alpha: 0.5
+    alpha: 0.5,
     color: 'rgb(215, 160, 80)'
 };
 
