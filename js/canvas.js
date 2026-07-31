@@ -56,47 +56,47 @@ window.addEventListener('resize',resizeCanvas);
 
 // drawSingleBeam();
 
-ctx.save(); 
+// ctx.save(); 
 
-ctx.shadowColor = 'rgba(255, 240, 200, 0.9)'; 
-ctx.shadowBlur = 35;
-ctx.beginPath();
-ctx.lineWidth = 10;
-ctx.strokeStyle = 'rgba(255, 250, 230, 0.9)';
-ctx.lineCap = 'round';
-ctx.moveTo(cx, 0);
-ctx.lineTo(cx, canvas.height * 0.65);
-ctx.stroke();
+// ctx.shadowColor = 'rgba(255, 240, 200, 0.9)'; 
+// ctx.shadowBlur = 35;
+// ctx.beginPath();
+// ctx.lineWidth = 10;
+// ctx.strokeStyle = 'rgba(255, 250, 230, 0.9)';
+// ctx.lineCap = 'round';
+// ctx.moveTo(cx, 0);
+// ctx.lineTo(cx, canvas.height * 0.65);
+// ctx.stroke();
 
-ctx.restore();
+// ctx.restore();
 
-ctx.save(); 
+// ctx.save(); 
 
-ctx.shadowColor = 'rgba(215, 160, 80, 0.5)'; 
-ctx.shadowBlur = 15;
-ctx.beginPath();
-ctx.lineWidth = 4;
-ctx.strokeStyle = 'rgba(215, 160, 80, 0.5)';
-ctx.lineCap = 'round';
-ctx.moveTo(cx -40, 0);
-ctx.lineTo(cx -40, canvas.height * 0.65);
-ctx.stroke();
+// ctx.shadowColor = 'rgba(215, 160, 80, 0.5)'; 
+// ctx.shadowBlur = 15;
+// ctx.beginPath();
+// ctx.lineWidth = 4;
+// ctx.strokeStyle = 'rgba(215, 160, 80, 0.5)';
+// ctx.lineCap = 'round';
+// ctx.moveTo(cx -40, 0);
+// ctx.lineTo(cx -40, canvas.height * 0.65);
+// ctx.stroke();
 
-ctx.restore();
+// ctx.restore();
 
-ctx.save(); 
+// ctx.save(); 
 
-ctx.shadowColor = 'rgba(215, 160, 80, 0.5)'; 
-ctx.shadowBlur = 15;
-ctx.beginPath();
-ctx.lineWidth = 4;
-ctx.strokeStyle = 'rgba(215, 160, 80, 0.5)';
-ctx.lineCap = 'round';
-ctx.moveTo(cx +40, 0);
-ctx.lineTo(cx +40, canvas.height * 0.65);
-ctx.stroke();
+// ctx.shadowColor = 'rgba(215, 160, 80, 0.5)'; 
+// ctx.shadowBlur = 15;
+// ctx.beginPath();
+// ctx.lineWidth = 4;
+// ctx.strokeStyle = 'rgba(215, 160, 80, 0.5)';
+// ctx.lineCap = 'round';
+// ctx.moveTo(cx +40, 0);
+// ctx.lineTo(cx +40, canvas.height * 0.65);
+// ctx.stroke();
 
-ctx.restore();
+// ctx.restore();
 
 //三條光束進階寫法
 // 1. 定義畫光束的通用工具函式
