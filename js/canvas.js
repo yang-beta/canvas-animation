@@ -137,14 +137,14 @@ const goldBeam ={
     offset: -50,
     width: 6,
     alpha: 0.5
-    color: '215, 160, 80'
+    color: 'rgb(215, 160, 80)'
 };
 
 const p ={
     x: 100,
     y: 150,
     size: 5,
-    // color: 'red'
+    color: 'red'
 };
 
 ctx.arc(p,0, Math.PI * 2);
