@@ -121,3 +121,13 @@ function drawBeam(x, width, color, blur) {
 drawBeam(cx, 10, 'rgba(255, 250, 230, 0.9)', 35);      // 中間主光束
 drawBeam(cx - 40, 4, 'rgba(215, 160, 80, 0.5)', 15);   // 左側光束
 drawBeam(cx + 40, 4, 'rgba(215, 160, 80, 0.5)', 15);   // 右側光束
+
+const singleParticle ={
+    x:300,
+    y:200,
+    size:4,
+    color: 'rgba(235,190,110,0.8)'
+};
+
+console.log(singleParticle.x);
+console.log(singleParticle.size);
