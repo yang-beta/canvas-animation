@@ -147,4 +147,9 @@ const p ={
     color: 'red'
 };
 
+ctx.beginPath();
+ctx.fillStyle = p.color;
+
 ctx.arc(p.x,p.y,p.size,0, Math.PI * 2);
+
+ctx.fill();
