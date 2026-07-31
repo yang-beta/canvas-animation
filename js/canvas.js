@@ -13,7 +13,7 @@ let cx = 0; //代表 Center X 與 Center Y（中心點）
 let cy = 0;
 
 function resizeCanvas() {
-    // 1. 取得瀏覽器視窗初始也是實際的寬與高
+    // 1. 取得瀏覽器視窗初始也是實際的寬與高，需要設定的原因是因為瀏覽器會預設給這張畫布 300px × 150px 的真實像素解析度
     const viewWidth = document.documentElement.clientWidth;
     const viewHeight = document.documentElement.clientHeight;
     
