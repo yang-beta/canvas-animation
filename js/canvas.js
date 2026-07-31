@@ -119,8 +119,8 @@ function drawBeam(x, width, color, blur) {
 
 // 2. 呼叫工具函式，輕鬆畫出三條線！
 drawBeam(cx, 10, 'rgba(255, 250, 230, 0.9)', 35);      // 中間主光束
-drawBeam(cx, 4, 'rgba(215, 160, 80, 0.5)', 15);   // 左側光束
-drawBeam(cx, 4, 'rgba(215, 160, 80, 0.5)', 15);   // 右側光束
+drawBeam(cx -20, 4, 'rgba(215, 160, 80, 0.5)', 15);   // 左側光束
+drawBeam(cx +20, 4, 'rgba(215, 160, 80, 0.5)', 15);   // 右側光束
 
 // 1. 建立一個名為 singleParticle 的物件，代表「單一顆金色粒子」的身分證
 const singleParticle ={
