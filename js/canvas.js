@@ -122,12 +122,13 @@ drawBeam(cx, 10, 'rgba(255, 250, 230, 0.9)', 35);      // 中間主光束
 drawBeam(cx - 40, 4, 'rgba(215, 160, 80, 0.5)', 15);   // 左側光束
 drawBeam(cx + 40, 4, 'rgba(215, 160, 80, 0.5)', 15);   // 右側光束
 
+// 1. 建立一個名為 singleParticle 的物件，代表「單一顆金色粒子」的身分證
 const singleParticle ={
     x:300,
     y:200,
     size:4,
     color: 'rgba(235,190,110,0.8)'
 };
-
+// 2. 如何讀取物件裡面的資料？使用「點語法 ( Dot Notation )」
 console.log(singleParticle.x);
 console.log(singleParticle.size);
