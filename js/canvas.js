@@ -132,3 +132,19 @@ const singleParticle ={
 // 2. 如何讀取物件裡面的資料？使用「點語法 ( Dot Notation )」
 console.log(singleParticle.x);
 console.log(singleParticle.size);
+
+const goldBeam ={
+    offset: -50,
+    width: 6,
+    alpha: 0.5
+    color: '215, 160, 80'
+};
+
+const p ={
+    x: 100,
+    y: 150,
+    size: 5,
+    color: 'red'
+};
+
+ctx.arc(p,0, Math.PI * 2);
