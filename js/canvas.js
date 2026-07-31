@@ -143,8 +143,8 @@ const goldBeam ={
 const p ={
     x: 100,
     y: 150,
-    size: 500,
-    color: 'rgba(255, 250, 230, 0.6)'
+    size: 50,
+    color: 'rgba(255, 250, 230, 0.8)'
 };
 
 ctx.beginPath();
