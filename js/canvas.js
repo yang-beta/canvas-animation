@@ -3,7 +3,7 @@ const ctx = canvas.getContext('2d');
 
 let particles = [];
 let animationProgress = { t: 0 }; // 動態進度控制變數 (0 到 1)
-const IMAGE_SRC = './pic/woman-s.png';    // ⚠️ 請替換為您的老婦人輪廓/剪影圖片路徑
+const IMAGE_SRC = './pic/woman-s.png'; // 輪廓圖片路徑
 
 function resizeCanvas() {
     canvas.width = window.innerWidth;
@@ -41,9 +41,9 @@ class Particle {
     }
 
     update(progress) {
-        // progress: 0 -> 0.4 (入場聚集) | 0.4 -> 0.6 (停留靜止) | 0.6 -> 1.0 (右吹消逝)
+        // progress: 0 -> 0.45 (入場聚集) | 0.45 -> 0.65 (停留靜止) | 0.65 -> 1.0 (右吹消逝)
         if (progress < 0.45) {
-            // 第一階段：從左側向目標位置聚攏 (Lerp 插值)
+            // 第一階段：從左側向目標位置聚攏
             const p = progress / 0.45;
             const easeP = Math.pow(p, 3); // 減速聚集
             this.x = this.startX + (this.targetX - this.startX) * easeP;
@@ -80,7 +80,6 @@ class Particle {
 // 🖼️ 載入圖像並抽樣提取粒子目標點
 function initParticlesFromImage(imageSrc) {
     const img = new Image();
-    // 如果是本機/同源伺服器，不需要 crossOrigin
     img.src = imageSrc;
 
     img.onload = () => {
@@ -88,29 +87,29 @@ function initParticlesFromImage(imageSrc) {
         const offCtx = offscreenCanvas.getContext('2d');
 
         // 設定輪廓圖在畫面中央呈現的大小
-        const scale = Math.min(canvas.width * 0.5 / img.width, canvas.height * 0.8 / img.height)[cite: 4];
-        const imgW = img.width * scale[cite: 4];
-        const imgH = img.height * scale[cite: 4];
-        const offsetX = (canvas.width - imgW) / 2[cite: 4];
-        const offsetY = (canvas.height - imgH) / 2[cite: 4];
+        const scale = Math.min(canvas.width * 0.5 / img.width, canvas.height * 0.8 / img.height);
+        const imgW = img.width * scale;
+        const imgH = img.height * scale;
+        const offsetX = (canvas.width - imgW) / 2;
+        const offsetY = (canvas.height - imgH) / 2;
 
-        offscreenCanvas.width = canvas.width[cite: 4];
-        offscreenCanvas.height = canvas.height[cite: 4];
+        offscreenCanvas.width = canvas.width;
+        offscreenCanvas.height = canvas.height;
         
         // 1. 將圖片畫到離屏 Canvas 上
-        offCtx.drawImage(img, offsetX, offsetY, imgW, imgH)[cite: 4];
+        offCtx.drawImage(img, offsetX, offsetY, imgW, imgH);
 
         // 2. 讀取像素
-        const imageData = offCtx.getImageData(0, 0, canvas.width, canvas.height)[cite: 4];
-        const data = imageData.data[cite: 4];
-        particles = [][cite: 4];
+        const imageData = offCtx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        particles = [];
 
         // 採樣間隔：線條稿建議設 3 或 4，粒子會比較細緻
         const gap = 3; 
 
         for (let y = 0; y < canvas.height; y += gap) {
             for (let x = 0; x < canvas.width; x += gap) {
-                const index = (y * canvas.width + x) * 4[cite: 4];
+                const index = (y * canvas.width + x) * 4;
                 const r = data[index];
                 const g = data[index + 1];
                 const b = data[index + 2];
@@ -119,9 +118,7 @@ function initParticlesFromImage(imageSrc) {
                 // 計算亮度 (0~255)
                 const brightness = (r + g + b) / 3;
 
-                // 🎯 關鍵修改：
-                // 情況 A：如果是透明底黑線圖 -> 抓 Alpha > 100 且 亮度 < 200 (非純白)
-                // 情況 B：如果是白底黑線圖 -> 抓 Alpha > 100 且 亮度 < 180 (偏暗的黑點/灰點)
+                // 針對白底/透明底黑線圖，擷取暗色線條
                 if (alpha > 100 && brightness < 180) {
                     particles.push(new Particle(x, y));
                 }
@@ -131,7 +128,7 @@ function initParticlesFromImage(imageSrc) {
         console.log("✅ 成功擷取到輪廓粒子數量：", particles.length);
 
         if (particles.length > 0) {
-            startAnimationTimeline()[cite: 4];
+            startAnimationTimeline();
         } else {
             console.warn("⚠️ 依然沒有抓到粒子，請檢查圖片是否有成功繪製於 canvas 上");
         }
@@ -142,7 +139,7 @@ function initParticlesFromImage(imageSrc) {
     };
 }
 
-// ⏱️ 利用 GSAP 控制 2.5s 聚攏 -> 2s 停留 -> 2.5s 散去
+// ⏱️ 利用 GSAP 控制動畫流程
 function startAnimationTimeline() {
     gsap.timeline({ repeat: -1, repeatDelay: 1 })
         .to(animationProgress, {
