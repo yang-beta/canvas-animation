@@ -8,51 +8,78 @@ function resizeCanvas() {
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
-// 🖼️ 1. 準備所有的圖片路徑清單（可放入超過 4 張，程式隨機挑 5 張執行）
+// -------------------------------------------------------------
+// ⚙️ 參數設定區
+// -------------------------------------------------------------
 const ALL_IMAGE_SOURCES = [
     './pic/woman-s.png',
     './pic/woman-s.png',
     './pic/woman-s.png',
     './pic/woman-s.png',
-    './pic/woman-s.png' // 👈 可自行新增更多圖片路徑
+    './pic/woman-s.png'
 ];
 
-// 🎲 從圖片庫中隨機抽選 N 張圖片 (不重複)
-function getRandomImages(sourceArray, count) {
-    const shuffled = [...sourceArray].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
-}
+// 🎯 1. 背景常駐飄移金塵設定
+const DUST_COUNT = 80; // 隨機飄移粒子的數量 (可自由設定)
 
-// ⏱️ 動態生成 4 張圖的配置檔 (隨機登場間隔 1.2s ~ 5.2s)
-function createRandomImageConfigs(selectedSources) {
-    let currentDelay = 0;
-    return selectedSources.map((src, index) => {
-        if (index === 0) {
-            currentDelay = 0; // 第一張圖 0 秒登場
-        } else {
-            // 後續圖片登場間隔隨機加 1.2 秒到 5.2 秒
-            const randomInterval = 1.2 + Math.random() * (5.2 - 1.2);
-            currentDelay += randomInterval;
-        }
-        return { src, delay: currentDelay };
-    });
-}
-
-let allImageGroups = [];
+let floatingDustParticles = []; // 存放常駐飄移粒子的陣列
+let sandImageParticles = [];    // 存放圖片輪廓粒子的陣列
 let globalProgress = { t: 0 };
-let totalAnimationDuration = 15; // 預設安全時間
+let totalAnimationDuration = 15;
 
-// 🎲 隨機產生不超出畫面的中心點 (帶有安全邊界)
-function getRandomPosition() {
-    const marginX = canvas.width * 0.2;
-    const marginY = canvas.height * 0.2;
-    return {
-        x: marginX + Math.random() * (canvas.width - marginX * 2),
-        y: marginY + Math.random() * (canvas.height - marginY * 2)
-    };
+// -------------------------------------------------------------
+// 🔲 類別 1: 常駐隨機飄移金塵 (Floating Dust)
+// -------------------------------------------------------------
+class FloatingDust {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        // 有大有小 (0.8px ~ 3.5px)
+        this.size = Math.random() * 2.7 + 0.8; 
+        
+        // 隨機移動速度與方向
+        this.vx = (Math.random() - 0.5) * 0.8;
+        this.vy = (Math.random() - 0.5) * 0.8;
+        
+        this.baseAlpha = Math.random() * 0.6 + 0.3;
+        this.alpha = this.baseAlpha;
+        this.pulseSpeed = Math.random() * 0.02 + 0.005; // 呼吸燈般的閃爍感
+    }
+
+    update() {
+        // 位置移動
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // 碰壁自動反彈
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+        // 微幅呼吸閃爍效果
+        this.alpha = this.baseAlpha + Math.sin(Date.now() * this.pulseSpeed) * 0.2;
+    }
+
+    draw() {
+        ctx.save();
+        ctx.fillStyle = `rgba(240, 195, 110, ${Math.max(0, this.alpha)})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
 }
 
-// 🔲 砂塵粒子類別
+// 初始化隨機飄移粒子
+function initFloatingDust() {
+    floatingDustParticles = [];
+    for (let i = 0; i < DUST_COUNT; i++) {
+        floatingDustParticles.push(new FloatingDust());
+    }
+}
+
+// -------------------------------------------------------------
+// 🔲 類別 2: 圖片輪廓砂塵粒子 (Sand Particle)
+// -------------------------------------------------------------
 class SandParticle {
     constructor(targetX, targetY, delay) {
         this.targetX = targetX;
@@ -77,7 +104,7 @@ class SandParticle {
 
     update(totalElapsedSec) {
         const localTime = totalElapsedSec - this.delay;
-        const duration = 8; // 單圖總存活時間 8 秒 (2s聚攏 -> 4s停留 -> 2s吹散)
+        const duration = 8; // 單圖總存活時間 8 秒
 
         if (localTime < 0 || localTime > duration) {
             this.alpha = 0;
@@ -87,19 +114,16 @@ class SandParticle {
         const progress = localTime / duration;
 
         if (progress < 0.25) {
-            // 聚攏階段
             const p = progress / 0.25;
             const easeP = 1 - Math.pow(1 - p, 2.5);
             this.x = this.startX + (this.targetX - this.startX) * easeP;
             this.y = this.startY + (this.targetY - this.startY) * easeP;
             this.alpha = Math.min(1, p * 1.5) * this.baseAlpha;
         } else if (progress >= 0.25 && progress <= 0.75) {
-            // 靜止停留與微幅飄動階段
             this.x = this.targetX + Math.sin(Date.now() * 0.003 + this.targetY) * this.noiseX;
             this.y = this.targetY + Math.cos(Date.now() * 0.003 + this.targetX) * this.noiseY;
             this.alpha = this.baseAlpha;
         } else {
-            // 向右吹散階段
             const p = (progress - 0.75) / 0.25;
             const easeP = Math.pow(p, 2.5);
             this.x = this.targetX + (this.endX - this.targetX) * easeP;
@@ -119,19 +143,77 @@ class SandParticle {
     }
 }
 
-// 🖼️ 載入與初始化隨機 4 張圖片
+// -------------------------------------------------------------
+// 🎲 輔助工具函式
+// -------------------------------------------------------------
+function getRandomImages(sourceArray, count) {
+    const shuffled = [...sourceArray].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+}
+
+function createRandomImageConfigs(selectedSources) {
+    let currentDelay = 0;
+    return selectedSources.map((src, index) => {
+        if (index === 0) {
+            currentDelay = 0;
+        } else {
+            const randomInterval = 1.2 + Math.random() * (5.2 - 1.2);
+            currentDelay += randomInterval;
+        }
+        return { src, delay: currentDelay };
+    });
+}
+
+function getRandomPosition() {
+    const marginX = canvas.width * 0.2;
+    const marginY = canvas.height * 0.2;
+    return {
+        x: marginX + Math.random() * (canvas.width - marginX * 2),
+        y: marginY + Math.random() * (canvas.height - marginY * 2)
+    };
+}
+
+// -------------------------------------------------------------
+// 📝 階段 2: 圖片結束後的「文字漸顯與淡出」動畫流程
+// -------------------------------------------------------------
+function playTextAnimationSequence() {
+    const textLines = document.querySelectorAll('.text-line');
+    const textTl = gsap.timeline();
+
+    textLines.forEach((line, index) => {
+        // 隨機間隔 1.5s ~ 3.0s 出現下一行
+        const randomDelay = index === 0 ? 0.5 : (1.5 + Math.random() * 1.5);
+
+        textTl.to(line, {
+            y: "0%",       // 向上升起歸位
+            opacity: 1,    // 漸顯
+            duration: 2.2, // 滑出過程平滑緩慢
+            ease: "power2.out"
+        }, `+=${randomDelay}`);
+    });
+
+    // 🎯 最後一行出現後，隨機停留 3 ~ 5 秒，然後全部文字淡出
+    const randomStayDuration = 3 + Math.random() * 2; // 3 ~ 5 秒
+
+    textTl.to("#text-container", {
+        opacity: 0,
+        duration: 2.5,
+        ease: "power2.inOut",
+        delay: randomStayDuration
+    });
+}
+
+// -------------------------------------------------------------
+// 🖼️ 載入與初始化
+// -------------------------------------------------------------
 async function initAllImages() {
-    // 1. 從庫中隨機挑選 4 張圖片
-    const selectedSources = getRandomImages(ALL_IMAGE_SOURCES, 5);
-    
-    // 2. 隨機生成登場的時間差 (delay 介於 1.2s ~ 5.2s)
+    initFloatingDust(); // 1. 啟動背景常駐金塵
+
+    const selectedSources = getRandomImages(ALL_IMAGE_SOURCES, 4);
     const imageConfigs = createRandomImageConfigs(selectedSources);
 
-    // 計算這場動畫的總長度 (最後一張圖登場時間 + 單圖存活 8 秒 + 緩衝 1 秒)
     const lastDelay = imageConfigs[imageConfigs.length - 1].delay;
-    totalAnimationDuration = lastDelay + 8 + 1;
-
-    console.log("🎲 隨機圖片配置完成：", imageConfigs);
+    totalAnimationDuration = lastDelay + 8 + 0.5;
 
     const loadPromises = imageConfigs.map(config => {
         return new Promise((resolve) => {
@@ -139,8 +221,6 @@ async function initAllImages() {
             img.src = config.src;
             img.onload = () => {
                 const pos = getRandomPosition();
-
-                // 🎯 3. 圖片目標寬度隨機：至少 500px，介於 500px ~ 650px 之間
                 const TARGET_WIDTH = 500 + Math.random() * 150;
                 
                 const scale = TARGET_WIDTH / img.width;
@@ -160,18 +240,12 @@ async function initAllImages() {
                 const imageData = offCtx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imageData.data;
                 const groupParticles = [];
-                const gap = 4; // 採樣間隔
+                const gap = 4;
 
                 for (let y = 0; y < canvas.height; y += gap) {
                     for (let x = 0; x < canvas.width; x += gap) {
                         const index = (y * canvas.width + x) * 4;
-                        const r = data[index];
-                        const g = data[index + 1];
-                        const b = data[index + 2];
-                        const alpha = data[index + 3];
-                        const brightness = (r + g + b) / 3;
-
-                        if (alpha > 100 && brightness < 180) {
+                        if (data[index + 3] > 100 && (data[index] + data[index + 1] + data[index + 2]) / 3 < 180) {
                             groupParticles.push(new SandParticle(x, y, config.delay));
                         }
                     }
@@ -182,7 +256,7 @@ async function initAllImages() {
     });
 
     const results = await Promise.all(loadPromises);
-    allImageGroups = results.flat();
+    sandImageParticles = results.flat();
 
     startAnimation();
 }
@@ -195,29 +269,38 @@ function startAnimation() {
         duration: totalAnimationDuration,
         ease: "none",
         onComplete: () => {
-            cancelAnimationFrame(animId);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            console.log("✨ 隨機動畫已播放完畢，繪製迴圈終止");
+            console.log("✨ 圖片沙塵粒子動畫完畢，觸發詩意文字登場...");
+            // 🎯 圖片沙塵結束後，播放文字漸顯動畫
+            playTextAnimationSequence();
         }
     });
 
     animate();
 }
 
+// 🔄 Canvas 繪製迴圈 (背景飄移粒子會一直持續)
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    allImageGroups.forEach(p => {
-        p.update(globalProgress.t);
-        p.draw();
+    // 1. 永遠繪製與更新「背景隨機飄移金塵」 (動畫結束後也不會停止)
+    floatingDustParticles.forEach(dust => {
+        dust.update();
+        dust.draw();
     });
 
+    // 2. 繪製「圖片輪廓沙塵」
     if (globalProgress.t < totalAnimationDuration) {
-        animId = requestAnimationFrame(animate);
+        sandImageParticles.forEach(p => {
+            p.update(globalProgress.t);
+            p.draw();
+        });
     }
+
+    // 不中斷迴圈，讓背景金塵保持常駐飄移
+    animId = requestAnimationFrame(animate);
 }
 
-// 啟動隨機多圖動畫
+// 啟動主流程
 initAllImages();
 
 // function startCanvasRecording(durationInSeconds) {
