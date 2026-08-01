@@ -41,22 +41,26 @@ class Particle {
     }
 
     update(progress) {
-        // progress: 0 -> 0.45 (入場聚集) | 0.45 -> 0.65 (停留靜止) | 0.65 -> 1.0 (右吹消逝)
-        if (progress < 0.45) {
+        // 新進度分配：
+        // 0.00 -> 0.25 : 聚攏入場 (2.5秒)
+        // 0.25 -> 0.75 : 停留靜止 (5秒 - 時間加長)
+        // 0.75 -> 1.00 : 右吹消逝 (2.5秒)
+
+        if (progress < 0.25) {
             // 第一階段：從左側向目標位置聚攏
-            const p = progress / 0.45;
+            const p = progress / 0.25;
             const easeP = Math.pow(p, 3); // 減速聚集
             this.x = this.startX + (this.targetX - this.startX) * easeP;
             this.y = this.startY + (this.targetY - this.startY) * easeP;
             this.alpha = Math.min(1, p * 1.5) * this.baseAlpha;
-        } else if (progress >= 0.45 && progress <= 0.65) {
-            // 第二階段：維持輪廓並帶有微幅飄動
+        } else if (progress >= 0.25 && progress <= 0.75) {
+            // 第二階段：維持人像輪廓並帶有微幅飄動 (停留時間拉長)
             this.x = this.targetX + Math.sin(Date.now() * 0.003 + this.targetY) * this.noiseX;
             this.y = this.targetY + Math.cos(Date.now() * 0.003 + this.targetX) * this.noiseY;
             this.alpha = this.baseAlpha;
         } else {
             // 第三階段：向右擴散吹散
-            const p = (progress - 0.65) / 0.35;
+            const p = (progress - 0.75) / 0.25;
             const easeP = Math.pow(p, 2); // 加速吹散
             this.x = this.targetX + (this.endX - this.targetX) * easeP;
             this.y = this.targetY + (this.endY - this.targetY) * easeP + (Math.random() - 0.5) * 2;
@@ -68,8 +72,6 @@ class Particle {
         if (this.alpha <= 0) return;
         ctx.save();
         ctx.fillStyle = `rgba(240, 195, 110, ${this.alpha})`; // 金黃色沙粒
-        // ctx.shadowColor = 'rgba(215, 160, 80, 0.8)';
-        // ctx.shadowBlur = 4; // 金光微發光特效
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
@@ -104,7 +106,7 @@ function initParticlesFromImage(imageSrc) {
         const data = imageData.data;
         particles = [];
 
-        // 採樣間隔：線條稿建議設 3 或 4，粒子會比較細緻
+        // 採樣間隔：4 粒子數適中且效能好
         const gap = 4; 
 
         for (let y = 0; y < canvas.height; y += gap) {
@@ -141,17 +143,15 @@ function initParticlesFromImage(imageSrc) {
 
 let animationFrameId;
 
-// ⏱️ 只播放一次：2.5s 聚攏 -> 2s 停留 -> 2.5s 散去
+// ⏱️ 只播放一次：總長度 10 秒（2.5s 聚攏 -> 5s 停留 -> 2.5s 散去）
 function startAnimationTimeline() {
     gsap.to(animationProgress, {
         t: 1,
-        duration: 8, // 總動畫時長 7 秒
+        duration: 10, // 總動畫時長設定為 10 秒
         ease: "none",
         onComplete: () => {
-            // 🎯 當動畫 100% 完成時，停止 Canvas 繪製迴圈，釋放系統資源！
+            // 當動畫 100% 完成時，停止 Canvas 繪製迴圈，釋放系統資源
             cancelAnimationFrame(animationFrameId);
-            
-            // 可選：最後再清空一次畫布，確保畫面乾淨
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             console.log("✨ 動畫已播放完畢，繪製迴圈已完全停止");
         }
@@ -169,8 +169,11 @@ function animate() {
         p.draw();
     });
 
-    // 只要動畫還在進行中，就繼續下一幀
+    // 只要動畫未完成，持續下一幀
     if (animationProgress.t < 1) {
         animationFrameId = requestAnimationFrame(animate);
     }
 }
+
+// 啟動動畫
+initParticlesFromImage(IMAGE_SRC);
