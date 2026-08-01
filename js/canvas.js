@@ -5,6 +5,10 @@ let particles = [];
 let animationProgress = { t: 0 }; // 動態進度控制變數 (0 到 1)
 const IMAGE_SRC = './pic/woman-s.png'; // 輪廓圖片路徑
 
+// 🎯 1. 人像大小控制參數 (放大/縮小)：
+// 1.0 代表預設大小；1.2 代表放大 20%；0.8 代表縮小 20%
+const IMAGE_SCALE_FACTOR = 1.0; 
+
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -41,27 +45,29 @@ class Particle {
     }
 
     update(progress) {
-        // 新進度分配：
-        // 0.00 -> 0.25 : 聚攏入場 (2.5秒)
-        // 0.25 -> 0.75 : 停留靜止 (5秒 - 時間加長)
-        // 0.75 -> 1.00 : 右吹消逝 (2.5秒)
+        // 進度比例分配：
+        // 0.00 -> 0.25 : 聚合入場 (2.5秒)
+        // 0.25 -> 0.75 : 停留靜止 (5.0秒)
+        // 0.75 -> 1.00 : 右吹散去 (2.5秒)
 
         if (progress < 0.25) {
-            // 第一階段：從左側向目標位置聚攏
+            // 第一階段：從左側向目標位置慢慢聚攏
             const p = progress / 0.25;
-            const easeP = Math.pow(p, 3); // 減速聚集
+            // 使用 Ease-Out 緩動，讓進入過程順暢平滑
+            const easeP = 1 - Math.pow(1 - p, 2.5);
             this.x = this.startX + (this.targetX - this.startX) * easeP;
             this.y = this.startY + (this.targetY - this.startY) * easeP;
-            this.alpha = Math.min(1, p * 1.5) * this.baseAlpha;
+            this.alpha = Math.min(1, p * 1.2) * this.baseAlpha;
         } else if (progress >= 0.25 && progress <= 0.75) {
-            // 第二階段：維持人像輪廓並帶有微幅飄動 (停留時間拉長)
+            // 第二階段：維持人像輪廓，帶有微幅飄動
             this.x = this.targetX + Math.sin(Date.now() * 0.003 + this.targetY) * this.noiseX;
             this.y = this.targetY + Math.cos(Date.now() * 0.003 + this.targetX) * this.noiseY;
             this.alpha = this.baseAlpha;
         } else {
-            // 第三階段：向右擴散吹散
+            // 第三階段：向右側慢慢吹散 (節奏與入場對稱)
             const p = (progress - 0.75) / 0.25;
-            const easeP = Math.pow(p, 2); // 加速吹散
+            // 使用 Ease-In 緩動，讓離開過程自然加速
+            const easeP = Math.pow(p, 2.5);
             this.x = this.targetX + (this.endX - this.targetX) * easeP;
             this.y = this.targetY + (this.endY - this.targetY) * easeP + (Math.random() - 0.5) * 2;
             this.alpha = this.baseAlpha * (1 - p); // 逐漸透明
@@ -88,10 +94,12 @@ function initParticlesFromImage(imageSrc) {
         const offscreenCanvas = document.createElement('canvas');
         const offCtx = offscreenCanvas.getContext('2d');
 
-        // 設定輪廓圖在畫面中央呈現的大小
-        const scale = Math.min(canvas.width * 0.5 / img.width, canvas.height * 0.8 / img.height);
-        const imgW = img.width * scale;
-        const imgH = img.height * scale;
+        // 🎯 2. 計算等比例縮放與自動置中：
+        const baseScale = Math.min(canvas.width * 0.5 / img.width, canvas.height * 0.8 / img.height);
+        const finalScale = baseScale * IMAGE_SCALE_FACTOR; // 乘以自訂倍率
+
+        const imgW = img.width * finalScale;
+        const imgH = img.height * finalScale;
         const offsetX = (canvas.width - imgW) / 2;
         const offsetY = (canvas.height - imgH) / 2;
 
@@ -106,7 +114,7 @@ function initParticlesFromImage(imageSrc) {
         const data = imageData.data;
         particles = [];
 
-        // 採樣間隔：4 粒子數適中且效能好
+        // 採樣間隔 (Gap)
         const gap = 4; 
 
         for (let y = 0; y < canvas.height; y += gap) {
@@ -117,10 +125,8 @@ function initParticlesFromImage(imageSrc) {
                 const b = data[index + 2];
                 const alpha = data[index + 3];
 
-                // 計算亮度 (0~255)
                 const brightness = (r + g + b) / 3;
 
-                // 針對白底/透明底黑線圖，擷取暗色線條
                 if (alpha > 100 && brightness < 180) {
                     particles.push(new Particle(x, y));
                 }
@@ -143,14 +149,13 @@ function initParticlesFromImage(imageSrc) {
 
 let animationFrameId;
 
-// ⏱️ 只播放一次：總長度 10 秒（2.5s 聚攏 -> 5s 停留 -> 2.5s 散去）
+// ⏱️ 只播放一次：總長 10 秒（2.5s 平滑聚合 -> 5s 停留 -> 2.5s 平滑散去）
 function startAnimationTimeline() {
     gsap.to(animationProgress, {
         t: 1,
-        duration: 10, // 總動畫時長設定為 10 秒
+        duration: 10,
         ease: "none",
         onComplete: () => {
-            // 當動畫 100% 完成時，停止 Canvas 繪製迴圈，釋放系統資源
             cancelAnimationFrame(animationFrameId);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             console.log("✨ 動畫已播放完畢，繪製迴圈已完全停止");
@@ -169,7 +174,6 @@ function animate() {
         p.draw();
     });
 
-    // 只要動畫未完成，持續下一幀
     if (animationProgress.t < 1) {
         animationFrameId = requestAnimationFrame(animate);
     }
