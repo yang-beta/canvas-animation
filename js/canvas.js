@@ -8,7 +8,7 @@ function resizeCanvas() {
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
-// 🖼️ 1. 準備所有的圖片路徑清單（可放入超過 4 張，程式只會隨機挑 4 張執行）
+// 🖼️ 1. 準備所有的圖片路徑清單（可放入超過 4 張，程式隨機挑 5 張執行）
 const ALL_IMAGE_SOURCES = [
     './pic/woman-s.png',
     './pic/woman-s.png',
@@ -122,7 +122,7 @@ class SandParticle {
 // 🖼️ 載入與初始化隨機 4 張圖片
 async function initAllImages() {
     // 1. 從庫中隨機挑選 4 張圖片
-    const selectedSources = getRandomImages(ALL_IMAGE_SOURCES, 4);
+    const selectedSources = getRandomImages(ALL_IMAGE_SOURCES, 5);
     
     // 2. 隨機生成登場的時間差 (delay 介於 1.2s ~ 5.2s)
     const imageConfigs = createRandomImageConfigs(selectedSources);
