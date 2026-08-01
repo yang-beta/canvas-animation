@@ -164,7 +164,7 @@ if (Math.random() > 0.5) {
 
 ctx.save();
 ctx.lineWidth = 20;
-ctx.strokeStyle = lightBeam;
+ctx.strokeStyle = ${lightBeam};
 ctx.beginPath();
 ctx.moveTo(200,800);
 ctx.lineTo (800,800);
