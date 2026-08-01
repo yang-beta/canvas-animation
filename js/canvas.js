@@ -24,7 +24,6 @@ const DUST_COUNT = 80; // 背景常駐飄移粒子數量
 
 let floatingDustParticles = [];
 let sandImageParticles = [];
-let generatedImageInfo = []; 
 let globalProgress = { t: 0 };
 let totalAnimationDuration = 15;
 
@@ -89,8 +88,7 @@ class SandParticle {
 
         this.x = this.startX;
         this.y = this.startY;
-        // 粒子調細一點，提升輪廓細緻度 (0.5px ~ 1.8px)
-        this.size = Math.random() * 1.3 + 0.5; 
+        this.size = Math.random() * 1.2 + 0.5; // 細沙尺寸
         this.baseAlpha = Math.random() * 0.7 + 0.3;
         this.alpha = 0;
 
@@ -100,7 +98,7 @@ class SandParticle {
 
     update(totalElapsedSec) {
         const localTime = totalElapsedSec - this.delay;
-        const duration = 8; 
+        const duration = 8;
 
         if (localTime < 0 || localTime > duration) {
             this.alpha = 0;
@@ -140,7 +138,7 @@ class SandParticle {
 }
 
 // -------------------------------------------------------------
-// 🎲 演算法：100% 不會超出螢幕 + 嚴格限制重疊率 <= 15%
+// 🎲 網格分區演算法：將螢幕分為 4 區，確保絕對離散不混亂
 // -------------------------------------------------------------
 function getRandomImages(sourceArray, count) {
     const shuffled = [...sourceArray].sort(() => 0.5 - Math.random());
@@ -160,87 +158,31 @@ function createRandomImageConfigs(selectedSources) {
     });
 }
 
-function getPartialOverlapPosition(imgWidth, imgHeight) {
-    // 🎯 1. 確保圖片的左右上下絕不超出螢幕 (留出安全 margin)
-    const minX = imgWidth / 2 + 30;
-    const maxX = Math.max(minX + 10, canvas.width - imgWidth / 2 - 30);
-    const minY = imgHeight / 2 + 30;
-    const maxY = Math.max(minY + 10, canvas.height - imgHeight / 2 - 30);
+// 🎯 將畫面劃分為 4 個象限分區 (左上, 右上, 左下, 右下)
+function getGridPosition(index, imgWidth, imgHeight) {
+    const halfW = canvas.width / 2;
+    const halfH = canvas.height / 2;
 
-    const MAX_OVERLAP_RATIO = 0.15; // 允許重疊上限 15%
-    
-    let maxAttempts = 150;
-    let bestPos = null;
-    let minObservedOverlap = Infinity;
+    // 4 個區域的基準中心點
+    const zones = [
+        { minX: imgWidth / 2 + 20, maxX: halfW - imgWidth / 2, minY: imgHeight / 2 + 20, maxY: halfH - imgHeight / 2 },          // 0: 左上
+        { minX: halfW + imgWidth / 2, maxX: canvas.width - imgWidth / 2 - 20, minY: imgHeight / 2 + 20, maxY: halfH - imgHeight / 2 },  // 1: 右上
+        { minX: imgWidth / 2 + 20, maxX: halfW - imgWidth / 2, minY: halfH + imgHeight / 2, maxY: canvas.height - imgHeight / 2 - 20 },  // 2: 左下
+        { minX: halfW + imgWidth / 2, maxX: canvas.width - imgWidth / 2 - 20, minY: halfH + imgHeight / 2, maxY: canvas.height - imgHeight / 2 - 20 }  // 3: 右下
+    ];
 
-    for (let i = 0; i < maxAttempts; i++) {
-        // 在絕對安全的內邊界隨機選擇中心點
-        const candidateX = minX + Math.random() * (maxX - minX);
-        const candidateY = minY + Math.random() * (maxY - minY);
-
-        const rectA = {
-            left: candidateX - imgWidth / 2,
-            right: candidateX + imgWidth / 2,
-            top: candidateY - imgHeight / 2,
-            bottom: candidateY + imgHeight / 2,
-            area: imgWidth * imgHeight
-        };
-
-        let tooMuchOverlap = false;
-        let maxOverlapRatioForThisCandidate = 0;
-
-        for (const prev of generatedImageInfo) {
-            const overlapX = Math.max(0, Math.min(rectA.right, prev.right) - Math.max(rectA.left, prev.left));
-            const overlapY = Math.max(0, Math.min(rectA.bottom, prev.bottom) - Math.max(rectA.top, prev.top));
-            
-            const overlapArea = overlapX * overlapY;
-
-            if (overlapArea > 0) {
-                const ratioA = overlapArea / rectA.area;
-                const ratioB = overlapArea / prev.area;
-                const maxRatio = Math.max(ratioA, ratioB);
-
-                maxOverlapRatioForThisCandidate = Math.max(maxOverlapRatioForThisCandidate, maxRatio);
-
-                if (maxRatio > MAX_OVERLAP_RATIO) {
-                    tooMuchOverlap = true;
-                    break;
-                }
-            }
-        }
-
-        if (maxOverlapRatioForThisCandidate < minObservedOverlap) {
-            minObservedOverlap = maxOverlapRatioForThisCandidate;
-            bestPos = { x: candidateX, y: candidateY, width: imgWidth, height: imgHeight };
-        }
-
-        if (!tooMuchOverlap) {
-            const finalRect = {
-                x: candidateX,
-                y: candidateY,
-                left: rectA.left,
-                right: rectA.right,
-                top: rectA.top,
-                bottom: rectA.bottom,
-                area: rectA.area
-            };
-            generatedImageInfo.push(finalRect);
-            return { x: candidateX, y: candidateY };
-        }
+    // 打亂分區順序，讓哪張圖去哪個分區也是隨機的
+    if (!window.shuffledZones) {
+        window.shuffledZones = [0, 1, 2, 3].sort(() => 0.5 - Math.random());
     }
 
-    // 防死鎖備用位置
-    const finalRect = {
-        x: bestPos.x,
-        y: bestPos.y,
-        left: bestPos.x - imgWidth / 2,
-        right: bestPos.x + imgWidth / 2,
-        top: bestPos.y - imgHeight / 2,
-        bottom: bestPos.y + imgHeight / 2,
-        area: imgWidth * imgHeight
-    };
-    generatedImageInfo.push(finalRect);
-    return { x: bestPos.x, y: bestPos.y };
+    const zone = zones[window.shuffledZones[index]];
+
+    // 在該區域內進行隨機微幅偏移
+    const candidateX = Math.max(zone.minX, Math.min(zone.maxX, zone.minX + Math.random() * (zone.maxX - zone.minX)));
+    const candidateY = Math.max(zone.minY, Math.min(zone.maxY, zone.minY + Math.random() * (zone.maxY - zone.minY)));
+
+    return { x: candidateX, y: candidateY };
 }
 
 // -------------------------------------------------------------
@@ -276,7 +218,7 @@ function playTextAnimationSequence() {
 // -------------------------------------------------------------
 async function initAllImages() {
     initFloatingDust();
-    generatedImageInfo = [];
+    window.shuffledZones = null; // 重置象限分區
 
     const selectedSources = getRandomImages(ALL_IMAGE_SOURCES, 4);
     const imageConfigs = createRandomImageConfigs(selectedSources);
@@ -284,18 +226,19 @@ async function initAllImages() {
     const lastDelay = imageConfigs[imageConfigs.length - 1].delay;
     totalAnimationDuration = lastDelay + 8 + 0.5;
 
-    const loadPromises = imageConfigs.map(config => {
+    const loadPromises = imageConfigs.map((config, imgIndex) => {
         return new Promise((resolve) => {
             const img = new Image();
             img.src = config.src;
             img.onload = () => {
-                // 適度調整最大尺寸：420px ~ 550px，畫面比例最合適且不容易擠爆
-                const TARGET_WIDTH = 420 + Math.random() * 130;
+                // 🎯 多圖尺寸適度放小至 350px ~ 460px，確保 4 個分區擺得下且美觀
+                const TARGET_WIDTH = 350 + Math.random() * 110;
                 const scale = TARGET_WIDTH / img.width;
                 const imgW = img.width * scale;
                 const imgH = img.height * scale;
 
-                const pos = getPartialOverlapPosition(imgW, imgH);
+                // 🎯 採用象限分區生成位置
+                const pos = getGridPosition(imgIndex, imgW, imgH);
 
                 const offscreen = document.createElement('canvas');
                 const offCtx = offscreen.getContext('2d');
@@ -311,8 +254,8 @@ async function initAllImages() {
                 const data = imageData.data;
                 const groupParticles = [];
                 
-                // 🎯 採樣間隔設為 3 (點更密集更細緻)
-                const gap = 3; 
+                // 🎯 針對網點圖 (Halftone)：加大 gap 至 6 或 7，稀釋過度密集的網點，讓輪廓凸顯！
+                const gap = 6; 
 
                 for (let y = 0; y < canvas.height; y += gap) {
                     for (let x = 0; x < canvas.width; x += gap) {
@@ -323,8 +266,8 @@ async function initAllImages() {
                         const alpha = data[index + 3];
                         const brightness = (r + g + b) / 3;
 
-                        // 🎯 關鍵修正：收緊亮度門檻至 < 90，只擷取真正的深色線條輪廓！
-                        if (alpha > 120 && brightness < 90) {
+                        // 🎯 門檻收緊至 < 50 (只抓最濃烈的黑色線條/陰影核心)
+                        if (alpha > 150 && brightness < 50) {
                             groupParticles.push(new SandParticle(x, y, config.delay));
                         }
                     }
