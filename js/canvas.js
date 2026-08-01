@@ -221,3 +221,5 @@ function drawGoldParticles() {
         ctx.restore(); // 還原狀態
     });
 }
+
+drawGoldParticles();
