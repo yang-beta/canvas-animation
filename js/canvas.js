@@ -254,8 +254,8 @@ async function initAllImages() {
                 const data = imageData.data;
                 const groupParticles = [];
                 
-                // 🎯 針對網點圖 (Halftone)：加大 gap 至 6 或 7，稀釋過度密集的網點，讓輪廓凸顯！
-                const gap = 6; 
+                // 🎯 針對網點圖 (Halftone)：調整過度密集的網點，讓輪廓凸顯！
+                const gap = 4; 
 
                 for (let y = 0; y < canvas.height; y += gap) {
                     for (let x = 0; x < canvas.width; x += gap) {
@@ -266,8 +266,8 @@ async function initAllImages() {
                         const alpha = data[index + 3];
                         const brightness = (r + g + b) / 3;
 
-                        // 🎯 門檻收緊至 < 50 (只抓最濃烈的黑色線條/陰影核心)
-                        if (alpha > 150 && brightness < 50) {
+                        // 🎯 圖片明暗門檻調整
+                        if (alpha > 100 && brightness < 160) {
                             groupParticles.push(new SandParticle(x, y, config.delay));
                         }
                     }
