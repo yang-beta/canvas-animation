@@ -80,7 +80,7 @@ class Particle {
 // 🖼️ 載入圖像並抽樣提取粒子目標點
 function initParticlesFromImage(imageSrc) {
     const img = new Image();
-    img.crossOrigin = "Anonymous";
+    // img.crossOrigin = "Anonymous";
     img.src = imageSrc;
 
     img.onload = () => {
