@@ -153,3 +153,20 @@ ctx.fillStyle = p.color;
 ctx.arc(p.x,p.y,p.size,0, Math.PI * 2);
 
 ctx.fill();
+
+let lightBeam;
+
+if Math.random() > 0.5 {
+    lightBeam = 'rgba(235,190,110,0.8)';
+} else {
+    lightBeam = 'rgba(255,255,255,0.8)';
+}
+
+ctx.save();
+ctx.lineWidth = 20;
+ctx.strokeStyle = lightBeam;
+ctx.beginPath();
+ctx.moveTo(200,800);
+ctx.lineTo (800,800);
+ctx.stroke;
+ctx.restore();
