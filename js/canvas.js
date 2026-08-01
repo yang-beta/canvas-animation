@@ -68,8 +68,8 @@ class Particle {
         if (this.alpha <= 0) return;
         ctx.save();
         ctx.fillStyle = `rgba(240, 195, 110, ${this.alpha})`; // 金黃色沙粒
-        ctx.shadowColor = 'rgba(215, 160, 80, 0.8)';
-        ctx.shadowBlur = 4; // 金光微發光特效
+        // ctx.shadowColor = 'rgba(215, 160, 80, 0.8)';
+        // ctx.shadowBlur = 4; // 金光微發光特效
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
@@ -105,7 +105,7 @@ function initParticlesFromImage(imageSrc) {
         particles = [];
 
         // 採樣間隔：線條稿建議設 3 或 4，粒子會比較細緻
-        const gap = 3; 
+        const gap = 4; 
 
         for (let y = 0; y < canvas.height; y += gap) {
             for (let x = 0; x < canvas.width; x += gap) {
@@ -145,7 +145,7 @@ let animationFrameId;
 function startAnimationTimeline() {
     gsap.to(animationProgress, {
         t: 1,
-        duration: 7, // 總動畫時長 7 秒
+        duration: 8, // 總動畫時長 7 秒
         ease: "none",
         onComplete: () => {
             // 🎯 當動畫 100% 完成時，停止 Canvas 繪製迴圈，釋放系統資源！
