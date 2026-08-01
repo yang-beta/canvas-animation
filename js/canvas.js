@@ -15,7 +15,7 @@ const ALL_IMAGE_SOURCES = [
     './pic/dog-s.png',
     './pic/grandpa-s.png',
     './pic/grandmom-s.png',
-    './pic/lovers-s.png',
+    './pic/lovers-l.png',
     './pic/kid-s.png',
     './pic/cat-s.png'
 ];
