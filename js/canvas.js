@@ -13,7 +13,7 @@ window.addEventListener('resize', resizeCanvas);
 // -------------------------------------------------------------
 const ALL_IMAGE_SOURCES = [
     './pic/dog-s.png',
-    './pic/granpa-s.png',
+    './pic/grandpa-s.png',
     './pic/grandmon-s.png',
     './pic/lovers.png',
     './pic/kid-s.png',
