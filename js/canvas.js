@@ -170,3 +170,54 @@ ctx.moveTo(200,800);
 ctx.lineTo (800,800);
 ctx.stroke();
 ctx.restore();
+
+const goldParticles = [];
+const particleCount = 80;
+
+for (let i=0; i < particleCount; i++) {
+
+    const newParticle = {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 19+1,
+        alpha: Math.random() * 0.5+0.2
+    };
+    
+    goldParticles.push(newParticle);
+}
+
+const beamLines = [];
+const lineCount = 40;
+
+for (let i=0; i<lineCount; i++){
+
+    const newLines = {
+        offset: (Math.random() - 0.5)* 500,
+        width: Math.random() *3 +1,
+        alpha: Math.random() *0.3 +0.1
+    };
+
+    beamLines.push(beamLines);
+}
+
+function drawGoldParticles() {
+    // 使用 forEach 巡邏陣列中的每一個粒子物件 (命名為 p)
+    goldParticles.forEach(p => {
+        ctx.save(); // 隔離發光與顏色狀態
+        
+        // 1. 設定粒子的填充顏色與發光
+        ctx.fillStyle = `rgba(235, 195, 100, ${p.alpha})`;
+        ctx.shadowColor = 'rgba(215, 160, 60, 0.6)';
+        ctx.shadowBlur = 6;
+
+        // 2. 開始畫圓形粒子
+        ctx.beginPath();
+        // arc 參數: (中心X, 中心Y, 半徑, 開始角度0, 結束角度 360度即 Math.PI * 2)
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        
+        // 3. 填滿圓形實心色彩
+        ctx.fill(); 
+
+        ctx.restore(); // 還原狀態
+    });
+}
