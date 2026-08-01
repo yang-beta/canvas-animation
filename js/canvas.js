@@ -12,11 +12,12 @@ window.addEventListener('resize', resizeCanvas);
 // ⚙️ 參數設定區
 // -------------------------------------------------------------
 const ALL_IMAGE_SOURCES = [
-    './pic/woman-s.png',
-    './pic/woman-s.png',
-    './pic/woman-s.png',
-    './pic/woman-s.png',
-    './pic/woman-s.png'
+    './pic/dog-s.png',
+    './pic/granpa-s.png',
+    './pic/grandmon-s.png',
+    './pic/lovers.png',
+    './pic/kid-s.png',
+    './pic/cat-s.png'
 ];
 
 const DUST_COUNT = 200; // 背景常駐飄移粒子的數量
