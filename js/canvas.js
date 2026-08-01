@@ -20,16 +20,16 @@ const ALL_IMAGE_SOURCES = [
     './pic/cat-s.png'
 ];
 
-const DUST_COUNT = 200; // 背景常駐飄移粒子的數量
+const DUST_COUNT = 80; // 背景常駐飄移粒子數量
 
 let floatingDustParticles = [];
 let sandImageParticles = [];
-let generatedImageInfo = []; // 紀錄已生成圖片的邊界與面積
+let generatedImageInfo = []; 
 let globalProgress = { t: 0 };
 let totalAnimationDuration = 15;
 
 // -------------------------------------------------------------
-// 🔲 類別 1: 常駐隨機飄移金塵 (Floating Dust)
+// 🔲 類別 1: 常駐隨機飄移金塵
 // -------------------------------------------------------------
 class FloatingDust {
     constructor() {
@@ -73,7 +73,7 @@ function initFloatingDust() {
 }
 
 // -------------------------------------------------------------
-// 🔲 類別 2: 圖片輪廓砂塵粒子 (Sand Particle)
+// 🔲 類別 2: 圖片輪廓砂塵粒子
 // -------------------------------------------------------------
 class SandParticle {
     constructor(targetX, targetY, delay) {
@@ -89,7 +89,8 @@ class SandParticle {
 
         this.x = this.startX;
         this.y = this.startY;
-        this.size = Math.random() * 1.6 + 0.6;
+        // 粒子調細一點，提升輪廓細緻度 (0.5px ~ 1.8px)
+        this.size = Math.random() * 1.3 + 0.5; 
         this.baseAlpha = Math.random() * 0.7 + 0.3;
         this.alpha = 0;
 
@@ -99,7 +100,7 @@ class SandParticle {
 
     update(totalElapsedSec) {
         const localTime = totalElapsedSec - this.delay;
-        const duration = 8; // 單圖總存活時間 8 秒
+        const duration = 8; 
 
         if (localTime < 0 || localTime > duration) {
             this.alpha = 0;
@@ -139,7 +140,7 @@ class SandParticle {
 }
 
 // -------------------------------------------------------------
-// 🎲 演算法：以「真實圖形面積」嚴格控制重疊率 <= 15%
+// 🎲 演算法：100% 不會超出螢幕 + 嚴格限制重疊率 <= 15%
 // -------------------------------------------------------------
 function getRandomImages(sourceArray, count) {
     const shuffled = [...sourceArray].sort(() => 0.5 - Math.random());
@@ -160,21 +161,23 @@ function createRandomImageConfigs(selectedSources) {
 }
 
 function getPartialOverlapPosition(imgWidth, imgHeight) {
-    const marginX = canvas.width * 0.12;
-    const marginY = canvas.height * 0.12;
+    // 🎯 1. 確保圖片的左右上下絕不超出螢幕 (留出安全 margin)
+    const minX = imgWidth / 2 + 30;
+    const maxX = Math.max(minX + 10, canvas.width - imgWidth / 2 - 30);
+    const minY = imgHeight / 2 + 30;
+    const maxY = Math.max(minY + 10, canvas.height - imgHeight / 2 - 30);
 
-    // 🎯 允許的重疊面積上限 (0.15 代表最多只能重疊 15% 的面積)
-    const MAX_OVERLAP_RATIO = 0.15; 
+    const MAX_OVERLAP_RATIO = 0.15; // 允許重疊上限 15%
     
-    let maxAttempts = 150; // 嘗試 150 次尋找完美位置
+    let maxAttempts = 150;
     let bestPos = null;
     let minObservedOverlap = Infinity;
 
     for (let i = 0; i < maxAttempts; i++) {
-        const candidateX = marginX + Math.random() * (canvas.width - marginX * 2);
-        const candidateY = marginY + Math.random() * (canvas.height - marginY * 2);
+        // 在絕對安全的內邊界隨機選擇中心點
+        const candidateX = minX + Math.random() * (maxX - minX);
+        const candidateY = minY + Math.random() * (maxY - minY);
 
-        // 當前候選圖的四邊範圍與面積
         const rectA = {
             left: candidateX - imgWidth / 2,
             right: candidateX + imgWidth / 2,
@@ -187,21 +190,18 @@ function getPartialOverlapPosition(imgWidth, imgHeight) {
         let maxOverlapRatioForThisCandidate = 0;
 
         for (const prev of generatedImageInfo) {
-            // 計算兩矩形在 X 軸與 Y 軸上的重疊長度
             const overlapX = Math.max(0, Math.min(rectA.right, prev.right) - Math.max(rectA.left, prev.left));
             const overlapY = Math.max(0, Math.min(rectA.bottom, prev.bottom) - Math.max(rectA.top, prev.top));
             
             const overlapArea = overlapX * overlapY;
 
             if (overlapArea > 0) {
-                // 計算重疊面積佔各圖面積的比例
                 const ratioA = overlapArea / rectA.area;
                 const ratioB = overlapArea / prev.area;
                 const maxRatio = Math.max(ratioA, ratioB);
 
                 maxOverlapRatioForThisCandidate = Math.max(maxOverlapRatioForThisCandidate, maxRatio);
 
-                // 若重疊率超過 15%，標記不合格
                 if (maxRatio > MAX_OVERLAP_RATIO) {
                     tooMuchOverlap = true;
                     break;
@@ -209,13 +209,11 @@ function getPartialOverlapPosition(imgWidth, imgHeight) {
             }
         }
 
-        // 紀錄最佳（重疊率最低）的備用位置
         if (maxOverlapRatioForThisCandidate < minObservedOverlap) {
             minObservedOverlap = maxOverlapRatioForThisCandidate;
             bestPos = { x: candidateX, y: candidateY, width: imgWidth, height: imgHeight };
         }
 
-        // 成功找到合格位置，立刻採用
         if (!tooMuchOverlap) {
             const finalRect = {
                 x: candidateX,
@@ -231,7 +229,7 @@ function getPartialOverlapPosition(imgWidth, imgHeight) {
         }
     }
 
-    // 防死鎖降級機制：使用重疊率最低的位置
+    // 防死鎖備用位置
     const finalRect = {
         x: bestPos.x,
         y: bestPos.y,
@@ -246,7 +244,7 @@ function getPartialOverlapPosition(imgWidth, imgHeight) {
 }
 
 // -------------------------------------------------------------
-// 📝 階段 2: 圖片結束後的「文字漸顯與淡出」動畫流程
+// 📝 詩意文字登場流程
 // -------------------------------------------------------------
 function playTextAnimationSequence() {
     const textLines = document.querySelectorAll('.text-line');
@@ -263,7 +261,7 @@ function playTextAnimationSequence() {
         }, `+=${randomDelay}`);
     });
 
-    const randomStayDuration = 3 + Math.random() * 2; // 隨機停留 3 ~ 5 秒
+    const randomStayDuration = 3 + Math.random() * 2;
 
     textTl.to("#text-container", {
         opacity: 0,
@@ -278,7 +276,7 @@ function playTextAnimationSequence() {
 // -------------------------------------------------------------
 async function initAllImages() {
     initFloatingDust();
-    generatedImageInfo = []; // 重置圖片位置邊界記錄
+    generatedImageInfo = [];
 
     const selectedSources = getRandomImages(ALL_IMAGE_SOURCES, 4);
     const imageConfigs = createRandomImageConfigs(selectedSources);
@@ -291,13 +289,12 @@ async function initAllImages() {
             const img = new Image();
             img.src = config.src;
             img.onload = () => {
-                // 🎯 隨機尺寸：500px ~ 650px
-                const TARGET_WIDTH = 500 + Math.random() * 150;
+                // 適度調整最大尺寸：420px ~ 550px，畫面比例最合適且不容易擠爆
+                const TARGET_WIDTH = 420 + Math.random() * 130;
                 const scale = TARGET_WIDTH / img.width;
                 const imgW = img.width * scale;
                 const imgH = img.height * scale;
 
-                // 🎯 取得精準重疊率 (<= 15%) 的座標
                 const pos = getPartialOverlapPosition(imgW, imgH);
 
                 const offscreen = document.createElement('canvas');
@@ -313,12 +310,21 @@ async function initAllImages() {
                 const imageData = offCtx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imageData.data;
                 const groupParticles = [];
-                const gap = 4;
+                
+                // 🎯 採樣間隔設為 3 (點更密集更細緻)
+                const gap = 3; 
 
                 for (let y = 0; y < canvas.height; y += gap) {
                     for (let x = 0; x < canvas.width; x += gap) {
                         const index = (y * canvas.width + x) * 4;
-                        if (data[index + 3] > 100 && (data[index] + data[index + 1] + data[index + 2]) / 3 < 180) {
+                        const r = data[index];
+                        const g = data[index + 1];
+                        const b = data[index + 2];
+                        const alpha = data[index + 3];
+                        const brightness = (r + g + b) / 3;
+
+                        // 🎯 關鍵修正：收緊亮度門檻至 < 90，只擷取真正的深色線條輪廓！
+                        if (alpha > 120 && brightness < 90) {
                             groupParticles.push(new SandParticle(x, y, config.delay));
                         }
                     }
@@ -353,13 +359,11 @@ function startAnimation() {
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 1. 常駐背景金塵 (永遠持續)
     floatingDustParticles.forEach(dust => {
         dust.update();
         dust.draw();
     });
 
-    // 2. 圖片輪廓粒子
     if (globalProgress.t < totalAnimationDuration) {
         sandImageParticles.forEach(p => {
             p.update(globalProgress.t);
