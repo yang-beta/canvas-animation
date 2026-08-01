@@ -20,7 +20,7 @@ const ALL_IMAGE_SOURCES = [
 ];
 
 // 🎯 1. 背景常駐飄移金塵設定
-const DUST_COUNT = 800; // 隨機飄移粒子的數量 (可自由設定)
+const DUST_COUNT = 200; // 隨機飄移粒子的數量 (可自由設定)
 
 let floatingDustParticles = []; // 存放常駐飄移粒子的陣列
 let sandImageParticles = [];    // 存放圖片輪廓粒子的陣列
