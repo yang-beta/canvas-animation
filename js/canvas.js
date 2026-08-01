@@ -139,14 +139,23 @@ function initParticlesFromImage(imageSrc) {
     };
 }
 
-// ⏱️ 利用 GSAP 控制動畫流程
+let animationFrameId;
+
+// ⏱️ 只播放一次：2.5s 聚攏 -> 2s 停留 -> 2.5s 散去
 function startAnimationTimeline() {
-    gsap.timeline({ repeat: -1, repeatDelay: 1 })
-        .to(animationProgress, {
-            t: 1,
-            duration: 7, // 總動畫時長 7 秒
-            ease: "none"
-        });
+    gsap.to(animationProgress, {
+        t: 1,
+        duration: 7, // 總動畫時長 7 秒
+        ease: "none",
+        onComplete: () => {
+            // 🎯 當動畫 100% 完成時，停止 Canvas 繪製迴圈，釋放系統資源！
+            cancelAnimationFrame(animationFrameId);
+            
+            // 可選：最後再清空一次畫布，確保畫面乾淨
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            console.log("✨ 動畫已播放完畢，繪製迴圈已完全停止");
+        }
+    });
 
     animate();
 }
@@ -160,8 +169,8 @@ function animate() {
         p.draw();
     });
 
-    requestAnimationFrame(animate);
+    // 只要動畫還在進行中，就繼續下一幀
+    if (animationProgress.t < 1) {
+        animationFrameId = requestAnimationFrame(animate);
+    }
 }
-
-// 啟動動畫
-initParticlesFromImage(IMAGE_SRC);
