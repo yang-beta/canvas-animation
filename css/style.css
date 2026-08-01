@@ -45,7 +45,7 @@ body {
     font-size: 2rem;
     font-weight: 500;
     letter-spacing: 0.2em;
-    color: #E6E6E8  /* 或調整為琥珀金色 #F0C36E; */
+    color: #E6E6E8;  /* 或調整為琥珀金色 #F0C36E; */
     text-shadow: 0 0 12px rgba(240, 195, 110, 0.4);
     
     /* 初始狀態：向下偏移 100% 隱藏在底線下方，透明度 0 */
