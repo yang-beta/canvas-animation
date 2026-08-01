@@ -19,11 +19,11 @@ const ALL_IMAGE_SOURCES = [
     './pic/woman-s.png'
 ];
 
-// 🎯 1. 背景常駐飄移金塵設定
-const DUST_COUNT = 200; // 隨機飄移粒子的數量 (可自由設定)
+const DUST_COUNT = 80; // 背景常駐飄移粒子的數量
 
-let floatingDustParticles = []; // 存放常駐飄移粒子的陣列
-let sandImageParticles = [];    // 存放圖片輪廓粒子的陣列
+let floatingDustParticles = [];
+let sandImageParticles = [];
+let generatedImageInfo = []; // 紀錄已生成圖片的中心點與半徑
 let globalProgress = { t: 0 };
 let totalAnimationDuration = 15;
 
@@ -34,28 +34,23 @@ class FloatingDust {
     constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        // 有大有小 (0.8px ~ 3.5px)
         this.size = Math.random() * 2.7 + 0.8; 
         
-        // 隨機移動速度與方向
         this.vx = (Math.random() - 0.5) * 0.8;
         this.vy = (Math.random() - 0.5) * 0.8;
         
         this.baseAlpha = Math.random() * 0.6 + 0.3;
         this.alpha = this.baseAlpha;
-        this.pulseSpeed = Math.random() * 0.02 + 0.005; // 呼吸燈般的閃爍感
+        this.pulseSpeed = Math.random() * 0.02 + 0.005;
     }
 
     update() {
-        // 位置移動
         this.x += this.vx;
         this.y += this.vy;
 
-        // 碰壁自動反彈
         if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
         if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
 
-        // 微幅呼吸閃爍效果
         this.alpha = this.baseAlpha + Math.sin(Date.now() * this.pulseSpeed) * 0.2;
     }
 
@@ -69,7 +64,6 @@ class FloatingDust {
     }
 }
 
-// 初始化隨機飄移粒子
 function initFloatingDust() {
     floatingDustParticles = [];
     for (let i = 0; i < DUST_COUNT; i++) {
@@ -144,7 +138,7 @@ class SandParticle {
 }
 
 // -------------------------------------------------------------
-// 🎲 輔助工具函式
+// 🎲 演算法：允許局部微重疊 (不超過 15%~20%) 的座標生成器
 // -------------------------------------------------------------
 function getRandomImages(sourceArray, count) {
     const shuffled = [...sourceArray].sort(() => 0.5 - Math.random());
@@ -164,36 +158,67 @@ function createRandomImageConfigs(selectedSources) {
     });
 }
 
-function getRandomPosition() {
-    const marginX = canvas.width * 0.2;
-    const marginY = canvas.height * 0.2;
-    return {
-        x: marginX + Math.random() * (canvas.width - marginX * 2),
-        y: marginY + Math.random() * (canvas.height - marginY * 2)
-    };
+function getPartialOverlapPosition(imgWidth, imgHeight) {
+    const marginX = canvas.width * 0.15;
+    const marginY = canvas.height * 0.15;
+
+    // 計算當前圖的近似半徑
+    const currentRadius = Math.max(imgWidth, imgHeight) / 2;
+    
+    // 重疊比例上限設定：0.15 代表最多允許 15%~20% 區域交錯重疊
+    const OVERLAP_FACTOR = 0.15; 
+    
+    let maxAttempts = 100;
+    let pos = null;
+
+    for (let i = 0; i < maxAttempts; i++) {
+        pos = {
+            x: marginX + Math.random() * (canvas.width - marginX * 2),
+            y: marginY + Math.random() * (canvas.height - marginY * 2)
+        };
+
+        // 檢查與「已存在圖片」的距離
+        const isOverlapTooMuch = generatedImageInfo.some(prev => {
+            const dx = pos.x - prev.x;
+            const dy = pos.y - prev.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // 允許重疊的安全距離門檻
+            const allowedMinDistance = (currentRadius + prev.radius) * (1 - OVERLAP_FACTOR);
+            
+            return distance < allowedMinDistance; // 若距離小於門檻，代表重疊超過 20%
+        });
+
+        if (!isOverlapTooMuch) {
+            generatedImageInfo.push({ x: pos.x, y: pos.y, radius: currentRadius });
+            return pos;
+        }
+    }
+
+    // 防死鎖降級機制
+    generatedImageInfo.push({ x: pos.x, y: pos.y, radius: currentRadius });
+    return pos;
 }
 
 // -------------------------------------------------------------
-// 📝 階段 2: 圖片結束後的「文字漸顯與淡出」動畫流程
+// 📝 詩意文字登場流程
 // -------------------------------------------------------------
 function playTextAnimationSequence() {
     const textLines = document.querySelectorAll('.text-line');
     const textTl = gsap.timeline();
 
     textLines.forEach((line, index) => {
-        // 隨機間隔 1.5s ~ 3.0s 出現下一行
         const randomDelay = index === 0 ? 0.5 : (1.5 + Math.random() * 1.5);
 
         textTl.to(line, {
-            y: "0%",       // 向上升起歸位
-            opacity: 1,    // 漸顯
-            duration: 2.2, // 滑出過程平滑緩慢
+            y: "0%",
+            opacity: 1,
+            duration: 2.2,
             ease: "power2.out"
         }, `+=${randomDelay}`);
     });
 
-    // 🎯 最後一行出現後，隨機停留 3 ~ 5 秒，然後全部文字淡出
-    const randomStayDuration = 3 + Math.random() * 2; // 3 ~ 5 秒
+    const randomStayDuration = 3 + Math.random() * 2; // 隨機停留 3 ~ 5 秒
 
     textTl.to("#text-container", {
         opacity: 0,
@@ -207,7 +232,8 @@ function playTextAnimationSequence() {
 // 🖼️ 載入與初始化
 // -------------------------------------------------------------
 async function initAllImages() {
-    initFloatingDust(); // 1. 啟動背景常駐金塵
+    initFloatingDust();
+    generatedImageInfo = []; // 重置記錄
 
     const selectedSources = getRandomImages(ALL_IMAGE_SOURCES, 4);
     const imageConfigs = createRandomImageConfigs(selectedSources);
@@ -220,12 +246,14 @@ async function initAllImages() {
             const img = new Image();
             img.src = config.src;
             img.onload = () => {
-                const pos = getRandomPosition();
+                // 🎯 隨機尺寸：500px ~ 650px
                 const TARGET_WIDTH = 500 + Math.random() * 150;
-                
                 const scale = TARGET_WIDTH / img.width;
                 const imgW = img.width * scale;
                 const imgH = img.height * scale;
+
+                // 🎯 取得微重疊座標
+                const pos = getPartialOverlapPosition(imgW, imgH);
 
                 const offscreen = document.createElement('canvas');
                 const offCtx = offscreen.getContext('2d');
@@ -269,8 +297,7 @@ function startAnimation() {
         duration: totalAnimationDuration,
         ease: "none",
         onComplete: () => {
-            console.log("✨ 圖片沙塵粒子動畫完畢，觸發詩意文字登場...");
-            // 🎯 圖片沙塵結束後，播放文字漸顯動畫
+            console.log("✨ 沙塵輪廓完畢，觸發文字浮現...");
             playTextAnimationSequence();
         }
     });
@@ -278,17 +305,16 @@ function startAnimation() {
     animate();
 }
 
-// 🔄 Canvas 繪製迴圈 (背景飄移粒子會一直持續)
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 1. 永遠繪製與更新「背景隨機飄移金塵」 (動畫結束後也不會停止)
+    // 1. 常駐背景金塵
     floatingDustParticles.forEach(dust => {
         dust.update();
         dust.draw();
     });
 
-    // 2. 繪製「圖片輪廓沙塵」
+    // 2. 圖片輪廓粒子
     if (globalProgress.t < totalAnimationDuration) {
         sandImageParticles.forEach(p => {
             p.update(globalProgress.t);
@@ -296,7 +322,6 @@ function animate() {
         });
     }
 
-    // 不中斷迴圈，讓背景金塵保持常駐飄移
     animId = requestAnimationFrame(animate);
 }
 
