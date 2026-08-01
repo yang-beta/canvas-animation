@@ -156,7 +156,7 @@ ctx.fill();
 
 let lightBeam;
 
-if Math.random() > 0.5 {
+if (Math.random() > 0.5) {
     lightBeam = 'rgba(235,190,110,0.8)';
 } else {
     lightBeam = 'rgba(255,255,255,0.8)';
