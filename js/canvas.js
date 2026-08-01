@@ -197,7 +197,7 @@ for (let i=0; i<lineCount; i++){
         alpha: Math.random() *0.3 +0.1
     };
 
-    beamLines.push(beamLines);
+    beamLines.push(newLines);
 }
 
 function drawGoldParticles() {
@@ -231,7 +231,9 @@ function drawLightBeams() {
         ctx.shadowBlur = 6;
         ctx.beginPath();
         ctx.lineWidth = Math.random() *25+5;
-        ctx.strokeStyle = 'rgba(215,160,80,${line.alpha})';
+        ctx.strokeStyle = `rgba(215,160,80,${line.alpha})`;
+        ctx.moveTo(cx +line.offset, 0);
+        ctx.lineTo(cx +line.offset, canvas.height *0.65);
         ctx.stroke();
         ctx.restore();
     });
