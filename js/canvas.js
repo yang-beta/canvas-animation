@@ -1,242 +1,151 @@
-// js/canvas.js
-
 const canvas = document.getElementById('CanvasAnime');
-
-//2. 向 canvas 索取 2D 繪圖畫筆
 const ctx = canvas.getContext('2d');
 
-//console.log(canvas);
-//console.log(ctx);
-
-//設定畫布，宣告畫布中心點變數 (先給預設值 0)
-let cx = 0; //代表 Center X 與 Center Y（中心點）
-let cy = 0;
+let particles = [];
+let animationProgress = { t: 0 }; // 動態進度控制變數 (0 到 1)
+const IMAGE_SRC = './pic/woman-s.png';    // ⚠️ 請替換為您的老婦人輪廓/剪影圖片路徑
 
 function resizeCanvas() {
-    // 1. 取得瀏覽器視窗初始也是實際的寬與高，需要設定的原因是因為瀏覽器會預設給這張畫布 300px × 150px 的真實像素解析度
-    const viewWidth = document.documentElement.clientWidth;
-    const viewHeight = document.documentElement.clientHeight;
-    
-    // 2. 將畫布的真實繪圖像素設定為視窗大小
-    canvas.width = viewWidth;
-    canvas.height = viewHeight;
-
-    // 3. 更新中心點座標 (寬度的一半, 高度的一半)
-
-    cx = viewWidth / 2;
-    cy = viewHeight / 2;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 }
-
-// 頁面初次載入時執行一次
 resizeCanvas();
-// 當使用者拖拉改變視窗大小時，自動觸發重新計算
-window.addEventListener('resize',resizeCanvas);
+window.addEventListener('resize', resizeCanvas);
 
-// function drawSingleBeam(){
+// 🔲 單一金沙粒子類別
+class Particle {
+    constructor(targetX, targetY) {
+        this.targetX = targetX;
+        this.targetY = targetY;
 
-//     // 1. 儲存當前的畫筆狀態
-//     ctx.save();
-//     // 2. 設定發光/陰影屬性
-//     ctx.shadowColor ='rgba(215,160,80,0.6)';
-//     ctx.shadowBlur = 25;
-//     //上面宣告完成後，底下是實際進入繪製階段
-//     ctx.beginPath();
-//     // 1. 設定線條顏色（RGBA: 紅, 綠, 藍, 透明度）
-//     ctx.strokeStyle = 'rgba(235,190,110,0.6)';
-//     // 2. 設定線條粗細 (單位為像素 px)
-//     ctx.lineWidth = 6;
-//     // 3. 設定線條端點形狀 ('round' 代表圓潤端點)
-//     ctx.lineCap = 'round';
-//     ctx.moveTo(cx,0);
-//     ctx.lineTo(cx, canvas.height*0.75);
-//     ctx.stroke();
-//     // 4. 還原畫筆狀態 (取消 shadowBlur 避免影響後續繪圖)
-//     ctx.restore();
-// }
+        // 1. 起始位置：從畫面左側隨機飛入
+        this.startX = -Math.random() * canvas.width * 0.5 - 50;
+        this.startY = targetY + (Math.random() - 0.5) * 300;
 
-// drawSingleBeam();
+        // 2. 結束位置：向畫面右側吹散
+        this.endX = canvas.width + Math.random() * canvas.width * 0.5 + 50;
+        this.endY = targetY + (Math.random() - 0.5) * 200;
 
-// ctx.save(); 
+        // 當前位置
+        this.x = this.startX;
+        this.y = this.startY;
 
-// ctx.shadowColor = 'rgba(255, 240, 200, 0.9)'; 
-// ctx.shadowBlur = 35;
-// ctx.beginPath();
-// ctx.lineWidth = 10;
-// ctx.strokeStyle = 'rgba(255, 250, 230, 0.9)';
-// ctx.lineCap = 'round';
-// ctx.moveTo(cx, 0);
-// ctx.lineTo(cx, canvas.height * 0.65);
-// ctx.stroke();
-
-// ctx.restore();
-
-// ctx.save(); 
-
-// ctx.shadowColor = 'rgba(215, 160, 80, 0.5)'; 
-// ctx.shadowBlur = 15;
-// ctx.beginPath();
-// ctx.lineWidth = 4;
-// ctx.strokeStyle = 'rgba(215, 160, 80, 0.5)';
-// ctx.lineCap = 'round';
-// ctx.moveTo(cx -40, 0);
-// ctx.lineTo(cx -40, canvas.height * 0.65);
-// ctx.stroke();
-
-// ctx.restore();
-
-// ctx.save(); 
-
-// ctx.shadowColor = 'rgba(215, 160, 80, 0.5)'; 
-// ctx.shadowBlur = 15;
-// ctx.beginPath();
-// ctx.lineWidth = 4;
-// ctx.strokeStyle = 'rgba(215, 160, 80, 0.5)';
-// ctx.lineCap = 'round';
-// ctx.moveTo(cx +40, 0);
-// ctx.lineTo(cx +40, canvas.height * 0.65);
-// ctx.stroke();
-
-// ctx.restore();
-
-//三條光束進階寫法
-// 1. 定義畫光束的通用工具函式
-function drawBeam(x, width, color, blur) {
-    ctx.save(); 
-    ctx.shadowColor = color; 
-    ctx.shadowBlur = blur;
-    ctx.beginPath();
-    ctx.lineWidth = width;
-    ctx.strokeStyle = color;
-    ctx.lineCap = 'round';
-    
-    // 繪製線條
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvas.height * 0.65);
-    ctx.stroke();
-    
-    ctx.restore();
-}
-
-// 2. 呼叫工具函式，輕鬆畫出三條線！
-drawBeam(cx, 10, 'rgba(255, 250, 230, 0.9)', 35);      // 中間主光束
-drawBeam(cx -20, 4, 'rgba(215, 160, 80, 0.5)', 15);   // 左側光束
-drawBeam(cx +20, 4, 'rgba(215, 160, 80, 0.5)', 15);   // 右側光束
-
-// 1. 建立一個名為 singleParticle 的物件，代表「單一顆金色粒子」的身分證
-const singleParticle ={
-    x:300,
-    y:200,
-    size:4,
-    color: 'rgba(235,190,110,0.8)'
-};
-// 2. 如何讀取物件裡面的資料？使用「點語法 ( Dot Notation )」
-console.log(singleParticle.x);
-console.log(singleParticle.size);
-
-const goldBeam ={
-    offset: -50,
-    width: 6,
-    alpha: 0.5,
-    color: 'rgb(215, 160, 80)'
-};
-
-const p ={
-    x: 100,
-    y: 150,
-    size: 50,
-    color: 'rgba(255, 250, 230, 0.8)'
-};
-
-ctx.beginPath();
-ctx.fillStyle = p.color;
-
-ctx.arc(p.x,p.y,p.size,0, Math.PI * 2);
-
-ctx.fill();
-
-let lightBeam;
-
-if (Math.random() > 0.5) {
-    lightBeam = 'rgba(235,190,110,0.8)';
-} else {
-    lightBeam = 'rgba(255,255,255,0.8)';
-}
-
-ctx.save();
-ctx.lineWidth = 20;
-ctx.strokeStyle = lightBeam;
-ctx.beginPath();
-ctx.moveTo(200,800);
-ctx.lineTo (800,800);
-ctx.stroke();
-ctx.restore();
-
-const goldParticles = [];
-const particleCount = 80;
-
-for (let i=0; i < particleCount; i++) {
-
-    const newParticle = {
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 19+1,
-        alpha: Math.random() * 0.5+0.2
-    };
-    
-    goldParticles.push(newParticle);
-}
-
-const beamLines = [];
-const lineCount = 40;
-
-for (let i=0; i<lineCount; i++){
-
-    const newLines = {
-        offset: (Math.random() - 0.5)* 500,
-        width: Math.random() *3 +1,
-        alpha: Math.random() *0.3 +0.1
-    };
-
-    beamLines.push(newLines);
-}
-
-function drawGoldParticles() {
-    // 使用 forEach 巡邏陣列中的每一個粒子物件 (命名為 p)
-    goldParticles.forEach(p => {
-        ctx.save(); // 隔離發光與顏色狀態
+        // 視覺與微動屬性
+        this.size = Math.random() * 1.8 + 0.6; // 0.6px ~ 2.4px 的細沙
+        this.baseAlpha = Math.random() * 0.7 + 0.3;
+        this.alpha = this.baseAlpha;
         
-        // 1. 設定粒子的填充顏色與發光
-        ctx.fillStyle = `rgba(235, 195, 100, ${p.alpha})`;
-        ctx.shadowColor = 'rgba(215, 160, 60, 0.6)';
-        ctx.shadowBlur = 6;
+        // 浮動噪音偏移量（營造塵埃感）
+        this.noiseX = (Math.random() - 0.5) * 2;
+        this.noiseY = (Math.random() - 0.5) * 2;
+    }
 
-        // 2. 開始畫圓形粒子
+    update(progress) {
+        // progress: 0 -> 0.4 (入場聚集) | 0.4 -> 0.6 (停留靜止) | 0.6 -> 1.0 (右吹消逝)
+        if (progress < 0.45) {
+            // 第一階段：從左側向目標位置聚攏 (Lerp 插值)
+            const p = progress / 0.45;
+            const easeP = Math.pow(p, 3); // 減速聚集
+            this.x = this.startX + (this.targetX - this.startX) * easeP;
+            this.y = this.startY + (this.targetY - this.startY) * easeP;
+            this.alpha = Math.min(1, p * 1.5) * this.baseAlpha;
+        } else if (progress >= 0.45 && progress <= 0.65) {
+            // 第二階段：維持輪廓並帶有微幅飄動
+            this.x = this.targetX + Math.sin(Date.now() * 0.003 + this.targetY) * this.noiseX;
+            this.y = this.targetY + Math.cos(Date.now() * 0.003 + this.targetX) * this.noiseY;
+            this.alpha = this.baseAlpha;
+        } else {
+            // 第三階段：向右擴散吹散
+            const p = (progress - 0.65) / 0.35;
+            const easeP = Math.pow(p, 2); // 加速吹散
+            this.x = this.targetX + (this.endX - this.targetX) * easeP;
+            this.y = this.targetY + (this.endY - this.targetY) * easeP + (Math.random() - 0.5) * 2;
+            this.alpha = this.baseAlpha * (1 - p); // 逐漸透明
+        }
+    }
+
+    draw() {
+        if (this.alpha <= 0) return;
+        ctx.save();
+        ctx.fillStyle = `rgba(240, 195, 110, ${this.alpha})`; // 金黃色沙粒
+        ctx.shadowColor = 'rgba(215, 160, 80, 0.8)';
+        ctx.shadowBlur = 4; // 金光微發光特效
         ctx.beginPath();
-        // arc 參數: (中心X, 中心Y, 半徑, 開始角度0, 結束角度 360度即 Math.PI * 2)
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        
-        // 3. 填滿圓形實心色彩
-        ctx.fill(); 
-
-        ctx.restore(); // 還原狀態
-    });
-}
-
-drawGoldParticles();
-
-function drawLightBeams() {
-    beamLines.forEach(line => {
-        ctx.save(); 
-        ctx.shadowColor = 'rgba(215, 160, 60, 0.6)';
-        ctx.shadowBlur = 6;
-        ctx.beginPath();
-        ctx.lineWidth = Math.random() *25+5;
-        ctx.strokeStyle = `rgba(215,160,80,${line.alpha})`;
-        ctx.moveTo(cx +line.offset, 0);
-        ctx.lineTo(cx +line.offset, canvas.height *0.65);
-        ctx.stroke();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
-    });
+    }
 }
 
-drawLightBeams();
+// 🖼️ 載入圖像並抽樣提取粒子目標點
+function initParticlesFromImage(imageSrc) {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = imageSrc;
+
+    img.onload = () => {
+        const offscreenCanvas = document.createElement('canvas');
+        const offCtx = offscreenCanvas.getContext('2d');
+
+        // 設定輪廓圖在畫面中央呈現的大小
+        const scale = Math.min(canvas.width * 0.5 / img.width, canvas.height * 0.8 / img.height);
+        const imgW = img.width * scale;
+        const imgH = img.height * scale;
+        const offsetX = (canvas.width - imgW) / 2;
+        const offsetY = (canvas.height - imgH) / 2;
+
+        offscreenCanvas.width = canvas.width;
+        offscreenCanvas.height = canvas.height;
+        offCtx.drawImage(img, offsetX, offsetY, imgW, imgH);
+
+        // 讀取像素
+        const imageData = offCtx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        particles = [];
+
+        // 採樣間隔 (Gap)：數值越小粒子越密，越大效能越好
+        const gap = 4; 
+
+        for (let y = 0; y < canvas.height; y += gap) {
+            for (let x = 0; x < canvas.width; x += gap) {
+                const index = (y * canvas.width + x) * 4;
+                const alpha = data[index + 3];
+                const brightness = (data[index] + data[index + 1] + data[index + 2]) / 3;
+
+                // 若像素不是完全透明，且具有亮度，則生成粒子目標
+                if (alpha > 128 && brightness > 30) {
+                    particles.push(new Particle(x, y));
+                }
+            }
+        }
+
+        startAnimationTimeline();
+    };
+}
+
+// ⏱️ 利用 GSAP 控制 2.5s 聚攏 -> 2s 停留 -> 2.5s 散去
+function startAnimationTimeline() {
+    gsap.timeline({ repeat: -1, repeatDelay: 1 })
+        .to(animationProgress, {
+            t: 1,
+            duration: 7, // 總動畫時長 7 秒
+            ease: "none"
+        });
+
+    animate();
+}
+
+// 🔄 Canvas 渲染主迴圈
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    particles.forEach(p => {
+        p.update(animationProgress.t);
+        p.draw();
+    });
+
+    requestAnimationFrame(animate);
+}
+
+// 啟動動畫
+initParticlesFromImage(IMAGE_SRC);
