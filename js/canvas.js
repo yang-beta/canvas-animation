@@ -223,3 +223,18 @@ function drawGoldParticles() {
 }
 
 drawGoldParticles();
+
+function drawLightBeams() {
+    beamLines.forEach(line => {
+        ctx.save(); 
+        ctx.shadowColor = 'rgba(215, 160, 60, 0.6)';
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.lineWidth = Math.random() *25+5;
+        ctx.strokeStyle = 'rgba(215,160,80,${line.alpha})';
+        ctx.stroke();
+        ctx.restore();
+    });
+}
+
+drawLightBeams();
