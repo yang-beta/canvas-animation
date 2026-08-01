@@ -80,7 +80,7 @@ class Particle {
 // 🖼️ 載入圖像並抽樣提取粒子目標點
 function initParticlesFromImage(imageSrc) {
     const img = new Image();
-    // img.crossOrigin = "Anonymous";
+    // 如果是本機/同源伺服器，不需要 crossOrigin
     img.src = imageSrc;
 
     img.onload = () => {
@@ -88,38 +88,57 @@ function initParticlesFromImage(imageSrc) {
         const offCtx = offscreenCanvas.getContext('2d');
 
         // 設定輪廓圖在畫面中央呈現的大小
-        const scale = Math.min(canvas.width * 0.5 / img.width, canvas.height * 0.8 / img.height);
-        const imgW = img.width * scale;
-        const imgH = img.height * scale;
-        const offsetX = (canvas.width - imgW) / 2;
-        const offsetY = (canvas.height - imgH) / 2;
+        const scale = Math.min(canvas.width * 0.5 / img.width, canvas.height * 0.8 / img.height)[cite: 4];
+        const imgW = img.width * scale[cite: 4];
+        const imgH = img.height * scale[cite: 4];
+        const offsetX = (canvas.width - imgW) / 2[cite: 4];
+        const offsetY = (canvas.height - imgH) / 2[cite: 4];
 
-        offscreenCanvas.width = canvas.width;
-        offscreenCanvas.height = canvas.height;
-        offCtx.drawImage(img, offsetX, offsetY, imgW, imgH);
+        offscreenCanvas.width = canvas.width[cite: 4];
+        offscreenCanvas.height = canvas.height[cite: 4];
+        
+        // 1. 將圖片畫到離屏 Canvas 上
+        offCtx.drawImage(img, offsetX, offsetY, imgW, imgH)[cite: 4];
 
-        // 讀取像素
-        const imageData = offCtx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        particles = [];
+        // 2. 讀取像素
+        const imageData = offCtx.getImageData(0, 0, canvas.width, canvas.height)[cite: 4];
+        const data = imageData.data[cite: 4];
+        particles = [][cite: 4];
 
-        // 採樣間隔 (Gap)：數值越小粒子越密，越大效能越好
-        const gap = 4; 
+        // 採樣間隔：線條稿建議設 3 或 4，粒子會比較細緻
+        const gap = 3; 
 
         for (let y = 0; y < canvas.height; y += gap) {
             for (let x = 0; x < canvas.width; x += gap) {
-                const index = (y * canvas.width + x) * 4;
+                const index = (y * canvas.width + x) * 4[cite: 4];
+                const r = data[index];
+                const g = data[index + 1];
+                const b = data[index + 2];
                 const alpha = data[index + 3];
-                const brightness = (data[index] + data[index + 1] + data[index + 2]) / 3;
 
-                // 若像素不是完全透明，且具有亮度，則生成粒子目標
-                if (alpha > 128 && brightness > 30) {
+                // 計算亮度 (0~255)
+                const brightness = (r + g + b) / 3;
+
+                // 🎯 關鍵修改：
+                // 情況 A：如果是透明底黑線圖 -> 抓 Alpha > 100 且 亮度 < 200 (非純白)
+                // 情況 B：如果是白底黑線圖 -> 抓 Alpha > 100 且 亮度 < 180 (偏暗的黑點/灰點)
+                if (alpha > 100 && brightness < 180) {
                     particles.push(new Particle(x, y));
                 }
             }
         }
 
-        startAnimationTimeline();
+        console.log("✅ 成功擷取到輪廓粒子數量：", particles.length);
+
+        if (particles.length > 0) {
+            startAnimationTimeline()[cite: 4];
+        } else {
+            console.warn("⚠️ 依然沒有抓到粒子，請檢查圖片是否有成功繪製於 canvas 上");
+        }
+    };
+
+    img.onerror = () => {
+        console.error("❌ 圖片載入失敗，請檢查路徑：", imageSrc);
     };
 }
 
