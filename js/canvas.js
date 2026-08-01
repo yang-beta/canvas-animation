@@ -19,11 +19,11 @@ const ALL_IMAGE_SOURCES = [
     './pic/woman-s.png'
 ];
 
-const DUST_COUNT = 80; // 背景常駐飄移粒子的數量
+const DUST_COUNT = 200; // 背景常駐飄移粒子的數量
 
 let floatingDustParticles = [];
 let sandImageParticles = [];
-let generatedImageInfo = []; // 紀錄已生成圖片的中心點與半徑
+let generatedImageInfo = []; // 紀錄已生成圖片的邊界與面積
 let globalProgress = { t: 0 };
 let totalAnimationDuration = 15;
 
@@ -138,7 +138,7 @@ class SandParticle {
 }
 
 // -------------------------------------------------------------
-// 🎲 演算法：允許局部微重疊 (不超過 15%~20%) 的座標生成器
+// 🎲 演算法：以「真實圖形面積」嚴格控制重疊率 <= 15%
 // -------------------------------------------------------------
 function getRandomImages(sourceArray, count) {
     const shuffled = [...sourceArray].sort(() => 0.5 - Math.random());
@@ -159,49 +159,93 @@ function createRandomImageConfigs(selectedSources) {
 }
 
 function getPartialOverlapPosition(imgWidth, imgHeight) {
-    const marginX = canvas.width * 0.15;
-    const marginY = canvas.height * 0.15;
+    const marginX = canvas.width * 0.12;
+    const marginY = canvas.height * 0.12;
 
-    // 計算當前圖的近似半徑
-    const currentRadius = Math.max(imgWidth, imgHeight) / 2;
+    // 🎯 允許的重疊面積上限 (0.15 代表最多只能重疊 15% 的面積)
+    const MAX_OVERLAP_RATIO = 0.15; 
     
-    // 重疊比例上限設定：0.15 代表最多允許 15%~20% 區域交錯重疊
-    const OVERLAP_FACTOR = 0.15; 
-    
-    let maxAttempts = 100;
-    let pos = null;
+    let maxAttempts = 150; // 嘗試 150 次尋找完美位置
+    let bestPos = null;
+    let minObservedOverlap = Infinity;
 
     for (let i = 0; i < maxAttempts; i++) {
-        pos = {
-            x: marginX + Math.random() * (canvas.width - marginX * 2),
-            y: marginY + Math.random() * (canvas.height - marginY * 2)
+        const candidateX = marginX + Math.random() * (canvas.width - marginX * 2);
+        const candidateY = marginY + Math.random() * (canvas.height - marginY * 2);
+
+        // 當前候選圖的四邊範圍與面積
+        const rectA = {
+            left: candidateX - imgWidth / 2,
+            right: candidateX + imgWidth / 2,
+            top: candidateY - imgHeight / 2,
+            bottom: candidateY + imgHeight / 2,
+            area: imgWidth * imgHeight
         };
 
-        // 檢查與「已存在圖片」的距離
-        const isOverlapTooMuch = generatedImageInfo.some(prev => {
-            const dx = pos.x - prev.x;
-            const dy = pos.y - prev.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            // 允許重疊的安全距離門檻
-            const allowedMinDistance = (currentRadius + prev.radius) * (1 - OVERLAP_FACTOR);
-            
-            return distance < allowedMinDistance; // 若距離小於門檻，代表重疊超過 20%
-        });
+        let tooMuchOverlap = false;
+        let maxOverlapRatioForThisCandidate = 0;
 
-        if (!isOverlapTooMuch) {
-            generatedImageInfo.push({ x: pos.x, y: pos.y, radius: currentRadius });
-            return pos;
+        for (const prev of generatedImageInfo) {
+            // 計算兩矩形在 X 軸與 Y 軸上的重疊長度
+            const overlapX = Math.max(0, Math.min(rectA.right, prev.right) - Math.max(rectA.left, prev.left));
+            const overlapY = Math.max(0, Math.min(rectA.bottom, prev.bottom) - Math.max(rectA.top, prev.top));
+            
+            const overlapArea = overlapX * overlapY;
+
+            if (overlapArea > 0) {
+                // 計算重疊面積佔各圖面積的比例
+                const ratioA = overlapArea / rectA.area;
+                const ratioB = overlapArea / prev.area;
+                const maxRatio = Math.max(ratioA, ratioB);
+
+                maxOverlapRatioForThisCandidate = Math.max(maxOverlapRatioForThisCandidate, maxRatio);
+
+                // 若重疊率超過 15%，標記不合格
+                if (maxRatio > MAX_OVERLAP_RATIO) {
+                    tooMuchOverlap = true;
+                    break;
+                }
+            }
+        }
+
+        // 紀錄最佳（重疊率最低）的備用位置
+        if (maxOverlapRatioForThisCandidate < minObservedOverlap) {
+            minObservedOverlap = maxOverlapRatioForThisCandidate;
+            bestPos = { x: candidateX, y: candidateY, width: imgWidth, height: imgHeight };
+        }
+
+        // 成功找到合格位置，立刻採用
+        if (!tooMuchOverlap) {
+            const finalRect = {
+                x: candidateX,
+                y: candidateY,
+                left: rectA.left,
+                right: rectA.right,
+                top: rectA.top,
+                bottom: rectA.bottom,
+                area: rectA.area
+            };
+            generatedImageInfo.push(finalRect);
+            return { x: candidateX, y: candidateY };
         }
     }
 
-    // 防死鎖降級機制
-    generatedImageInfo.push({ x: pos.x, y: pos.y, radius: currentRadius });
-    return pos;
+    // 防死鎖降級機制：使用重疊率最低的位置
+    const finalRect = {
+        x: bestPos.x,
+        y: bestPos.y,
+        left: bestPos.x - imgWidth / 2,
+        right: bestPos.x + imgWidth / 2,
+        top: bestPos.y - imgHeight / 2,
+        bottom: bestPos.y + imgHeight / 2,
+        area: imgWidth * imgHeight
+    };
+    generatedImageInfo.push(finalRect);
+    return { x: bestPos.x, y: bestPos.y };
 }
 
 // -------------------------------------------------------------
-// 📝 詩意文字登場流程
+// 📝 階段 2: 圖片結束後的「文字漸顯與淡出」動畫流程
 // -------------------------------------------------------------
 function playTextAnimationSequence() {
     const textLines = document.querySelectorAll('.text-line');
@@ -233,7 +277,7 @@ function playTextAnimationSequence() {
 // -------------------------------------------------------------
 async function initAllImages() {
     initFloatingDust();
-    generatedImageInfo = []; // 重置記錄
+    generatedImageInfo = []; // 重置圖片位置邊界記錄
 
     const selectedSources = getRandomImages(ALL_IMAGE_SOURCES, 4);
     const imageConfigs = createRandomImageConfigs(selectedSources);
@@ -252,7 +296,7 @@ async function initAllImages() {
                 const imgW = img.width * scale;
                 const imgH = img.height * scale;
 
-                // 🎯 取得微重疊座標
+                // 🎯 取得精準重疊率 (<= 15%) 的座標
                 const pos = getPartialOverlapPosition(imgW, imgH);
 
                 const offscreen = document.createElement('canvas');
@@ -297,7 +341,7 @@ function startAnimation() {
         duration: totalAnimationDuration,
         ease: "none",
         onComplete: () => {
-            console.log("✨ 沙塵輪廓完畢，觸發文字浮現...");
+            console.log("✨ 沙塵輪廓完畢，觸發文字漸顯動畫...");
             playTextAnimationSequence();
         }
     });
@@ -308,7 +352,7 @@ function startAnimation() {
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 1. 常駐背景金塵
+    // 1. 常駐背景金塵 (永遠持續)
     floatingDustParticles.forEach(dust => {
         dust.update();
         dust.draw();
