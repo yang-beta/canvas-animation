@@ -20,7 +20,7 @@ const ALL_IMAGE_SOURCES = [
     './pic/cat-l.png'
 ];
 
-const DUST_COUNT = 80; // 背景常駐飄移粒子數量
+const DUST_COUNT = 80; // 常駐背景飄移金塵數量
 
 let floatingDustParticles = [];
 let sandImageParticles = [];
@@ -34,7 +34,7 @@ class FloatingDust {
     constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2.7 + 0.8; 
+        this.size = Math.random() * 2.5 + 0.8; 
         
         this.vx = (Math.random() - 0.5) * 0.8;
         this.vy = (Math.random() - 0.5) * 0.8;
@@ -72,7 +72,7 @@ function initFloatingDust() {
 }
 
 // -------------------------------------------------------------
-// 🔲 類別 2: 圖片輪廓砂塵粒子
+// 🔲 類別 2: 圖片輪廓砂塵粒子 (針對點陣線條圖優化)
 // -------------------------------------------------------------
 class SandParticle {
     constructor(targetX, targetY, delay) {
@@ -88,7 +88,8 @@ class SandParticle {
 
         this.x = this.startX;
         this.y = this.startY;
-        this.size = Math.random() * 1.2 + 0.5; // 細沙尺寸
+        // 線條圖建議粒徑 0.6px ~ 1.6px
+        this.size = Math.random() * 1.0 + 0.6; 
         this.baseAlpha = Math.random() * 0.7 + 0.3;
         this.alpha = 0;
 
@@ -98,7 +99,7 @@ class SandParticle {
 
     update(totalElapsedSec) {
         const localTime = totalElapsedSec - this.delay;
-        const duration = 8;
+        const duration = 8; 
 
         if (localTime < 0 || localTime > duration) {
             this.alpha = 0;
@@ -138,11 +139,13 @@ class SandParticle {
 }
 
 // -------------------------------------------------------------
-// 🎲 網格分區演算法：將螢幕分為 4 區，確保絕對離散不混亂
+// 🎯 梅花型 5 區固態座標演算法 (含 ±10% 隨機位移量)
 // -------------------------------------------------------------
-function getRandomImages(sourceArray, count) {
+function getRandomImages(sourceArray, minCount = 4, maxCount = 5) {
     const shuffled = [...sourceArray].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
+    // 隨機選擇 4 張或 5 張圖
+    const targetCount = Math.floor(Math.random() * (maxCount - minCount + 1)) + minCount;
+    return shuffled.slice(0, Math.min(targetCount, sourceArray.length));
 }
 
 function createRandomImageConfigs(selectedSources) {
@@ -158,31 +161,37 @@ function createRandomImageConfigs(selectedSources) {
     });
 }
 
-// 🎯 將畫面劃分為 4 個象限分區 (左上, 右上, 左下, 右下)
-function getGridPosition(index, imgWidth, imgHeight) {
-    const halfW = canvas.width / 2;
-    const halfH = canvas.height / 2;
+// 📍 依據第二張圖設定 5 個相對位置 (梅花佈局)
+function getFixed5ZonePosition(index, imgW, imgH) {
+    const W = canvas.width;
+    const H = canvas.height;
 
-    // 4 個區域的基準中心點
-    const zones = [
-        { minX: imgWidth / 2 + 20, maxX: halfW - imgWidth / 2, minY: imgHeight / 2 + 20, maxY: halfH - imgHeight / 2 },          // 0: 左上
-        { minX: halfW + imgWidth / 2, maxX: canvas.width - imgWidth / 2 - 20, minY: imgHeight / 2 + 20, maxY: halfH - imgHeight / 2 },  // 1: 右上
-        { minX: imgWidth / 2 + 20, maxX: halfW - imgWidth / 2, minY: halfH + imgHeight / 2, maxY: canvas.height - imgHeight / 2 - 20 },  // 2: 左下
-        { minX: halfW + imgWidth / 2, maxX: canvas.width - imgWidth / 2 - 20, minY: halfH + imgHeight / 2, maxY: canvas.height - imgHeight / 2 - 20 }  // 3: 右下
+    // 5 個基礎中心點 (相對比例)
+    // 0: 左上 (22%, 25%) | 1: 右上 (78%, 25%) | 2: 正中 (50%, 50%) | 3: 左下 (22%, 75%) | 4: 右下 (78%, 75%)
+    const baseCenters = [
+        { x: W * 0.22, y: H * 0.25 }, // 左上
+        { x: W * 0.78, y: H * 0.25 }, // 右上
+        { x: W * 0.50, y: H * 0.50 }, // 正中
+        { x: W * 0.22, y: H * 0.75 }, // 左下
+        { x: W * 0.78, y: H * 0.75 }  // 右下
     ];
 
-    // 打亂分區順序，讓哪張圖去哪個分區也是隨機的
-    if (!window.shuffledZones) {
-        window.shuffledZones = [0, 1, 2, 3].sort(() => 0.5 - Math.random());
+    // 初始化時將 5 個位置打亂順序，確保出現位置隨機
+    if (!window.shuffledBaseZones) {
+        window.shuffledBaseZones = [0, 1, 2, 3, 4].sort(() => 0.5 - Math.random());
     }
 
-    const zone = zones[window.shuffledZones[index]];
+    const center = baseCenters[window.shuffledBaseZones[index]];
 
-    // 在該區域內進行隨機微幅偏移
-    const candidateX = Math.max(zone.minX, Math.min(zone.maxX, zone.minX + Math.random() * (zone.maxX - zone.minX)));
-    const candidateY = Math.max(zone.minY, Math.min(zone.maxY, zone.minY + Math.random() * (zone.maxY - zone.minY)));
+    // 🎯 增加 ±10% 的上下左右隨機位移量
+    const offsetX = (Math.random() - 0.5) * 0.2 * W;
+    const offsetY = (Math.random() - 0.5) * 0.2 * H;
 
-    return { x: candidateX, y: candidateY };
+    // 邊界防護，防止 10% 偏移後切到視窗外
+    const finalX = Math.max(imgW / 2 + 20, Math.min(W - imgW / 2 - 20, center.x + offsetX));
+    const finalY = Math.max(imgH / 2 + 20, Math.min(H - imgH / 2 - 20, center.y + offsetY));
+
+    return { x: finalX, y: finalY };
 }
 
 // -------------------------------------------------------------
@@ -218,9 +227,10 @@ function playTextAnimationSequence() {
 // -------------------------------------------------------------
 async function initAllImages() {
     initFloatingDust();
-    window.shuffledZones = null; // 重置象限分區
+    window.shuffledBaseZones = null; // 重置位置區域分配
 
-    const selectedSources = getRandomImages(ALL_IMAGE_SOURCES, 4);
+    // 🎯 隨機選擇 4 ~ 5 張圖
+    const selectedSources = getRandomImages(ALL_IMAGE_SOURCES, 4, 5);
     const imageConfigs = createRandomImageConfigs(selectedSources);
 
     const lastDelay = imageConfigs[imageConfigs.length - 1].delay;
@@ -231,14 +241,14 @@ async function initAllImages() {
             const img = new Image();
             img.src = config.src;
             img.onload = () => {
-                // 🎯 多圖尺寸適度放小至 350px ~ 460px，確保 4 個分區擺得下且美觀
-                const TARGET_WIDTH = 350 + Math.random() * 110;
+                // 🎯 圖片寬度：400px ~ 480px (梅花 5 區最佳視覺比例)
+                const TARGET_WIDTH = 400 + Math.random() * 80;
                 const scale = TARGET_WIDTH / img.width;
                 const imgW = img.width * scale;
                 const imgH = img.height * scale;
 
-                // 🎯 採用象限分區生成位置
-                const pos = getGridPosition(imgIndex, imgW, imgH);
+                // 🎯 取得帶有 ±10% 位移的梅花型位置
+                const pos = getFixed5ZonePosition(imgIndex, imgW, imgH);
 
                 const offscreen = document.createElement('canvas');
                 const offCtx = offscreen.getContext('2d');
@@ -254,8 +264,8 @@ async function initAllImages() {
                 const data = imageData.data;
                 const groupParticles = [];
                 
-                // 🎯 針對網點圖 (Halftone)：調整過度密集的網點，讓輪廓凸顯！
-                const gap = 4; 
+                // 🎯 點陣線條稿最佳採樣設定：gap = 3
+                const gap = 3; 
 
                 for (let y = 0; y < canvas.height; y += gap) {
                     for (let x = 0; x < canvas.width; x += gap) {
@@ -266,8 +276,8 @@ async function initAllImages() {
                         const alpha = data[index + 3];
                         const brightness = (r + g + b) / 3;
 
-                        // 🎯 圖片明暗門檻調整
-                        if (alpha > 100 && brightness < 160) {
+                        // 🎯 採樣點陣線條：Alpha > 100 且 Brightness < 200
+                        if (alpha > 100 && brightness < 200) {
                             groupParticles.push(new SandParticle(x, y, config.delay));
                         }
                     }
@@ -317,9 +327,9 @@ function animate() {
     animId = requestAnimationFrame(animate);
 }
 
-// 啟動主流程
-initAllImages();
-
+// -------------------------------------------------------------
+// 🎥 Canvas 動態錄製工具 (預設保持註解)
+// -------------------------------------------------------------
 // function startCanvasRecording(durationInSeconds) {
 //     // 1. 從 Canvas 抓取畫面串流 (60 FPS)
 //     const stream = canvas.captureStream(60);
@@ -357,4 +367,5 @@ initAllImages();
 //     }, durationInSeconds * 1000);
 // }
 
-// 💡 提示：在 initParticlesFromImage 完成後呼叫 `startCanvasRecording(10);` 即可！
+// 啟動主流程
+initAllImages();
