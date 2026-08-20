@@ -1101,24 +1101,24 @@
       .to(goldenLine, {
         y: "0%",
         opacity: 1,
-        duration: 1.5,
+        duration: 2.5,
         ease: "power2.out"
       })
       .to("#fPart1", {
         y: "0%",
         opacity: 1,
-        duration: 1.2,
+        duration: 2.5,
         ease: "power1.out"
       }, "-=1.2")
-      .to("#dot1", { y: "0%", opacity: 1, duration: .3 }, "+=.4")
-      .to("#dot2", { y: "0%", opacity: 1, duration: .3 }, "+=.3")
-      .to("#dot3", { y: "0%", opacity: 1, duration: .3 }, "+=.3")
+      .to("#dot1", { y: "0%", opacity: 1, duration: .6 }, "+=.4")
+      .to("#dot2", { y: "0%", opacity: 1, duration: .6 }, "+=.3")
+      .to("#dot3", { y: "0%", opacity: 1, duration: .6 }, "+=.3")
       .to("#fPart2", {
         y: "0%",
         opacity: 1,
-        duration: 1.5,
+        duration: 2.5,
         ease: "power1.out"
-      }, "+=.5")
+      }, "+=1.5")
       .call(completeAnimation);
   }
 
