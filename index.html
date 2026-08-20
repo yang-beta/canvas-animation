@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden Sand Particle & Text Animation</title>
+    
+    <!-- 引入中文字型 (思源宋體 / Noto Serif TC) 讓文字質感大幅提升 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- GSAP 動畫庫 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body>
+
+    <canvas id="CanvasAnime"></canvas>
+
+    <!-- 詩意文字容器 -->
+    <div id="text-container">
+        <div class="text-line-wrapper"><div class="text-line">回憶 雖然會慢慢消逝</div></div>
+        <div class="text-line-wrapper"><div class="text-line">回憶 也會停留</div></div>
+        <div class="text-line-wrapper"><div class="text-line">回憶 又慢慢地浮現</div></div>
+    </div>
+
+    <script src="js/canvas.js"></script>
+</body>
+</html>
