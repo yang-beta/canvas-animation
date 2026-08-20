@@ -1083,7 +1083,7 @@
     }));
 
     textTimeline = gsap.timeline();
-    createGroupedStoryAnimation(textTimeline, groups, 1.5);
+    createGroupedStoryAnimation(textTimeline, groups, 2.5);
 
     const goldenLine = document.getElementById("goldenLine");
 
