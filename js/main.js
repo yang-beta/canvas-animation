@@ -33,8 +33,8 @@
     './img/hand2hand.png',
     './img/gradny.png',
     './img/dog.png',
-    './img/cat.png',
-    './img/hi5.png'
+    './img/left.png',
+    './img/right.png'
   ];
 
   const P2_IMAGE_MIN_COUNT = 2;
