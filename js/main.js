@@ -136,6 +136,34 @@
   );
 };
 
+  /*
+    計算整個沙動畫需要播放多久。
+
+    前四張各自依文字行開始時間播放；
+    第 5、6 張會在「如果思念有形狀――」出現時同時開始，
+    因此這裡直接找出所有圖片中最晚的開始時間，
+    再加上粒子生命週期與 1 秒安全緩衝。
+
+    這樣未來若再次調整圖片數量或時間，不需要手動重算總長度。
+  */
+  const getTotalAnimationDuration = () => {
+    const lastImageStart =
+      P2_IMAGE_SEQUENCE.reduce(
+        (latest, _, index) =>
+          Math.max(
+            latest,
+            getImageStartTime(index)
+          ),
+        0
+      );
+
+    return (
+      lastImageStart +
+      P2_PARTICLE_LIFETIME +
+      1
+    );
+  };
+
   function validateImageCount() {
     const count =
       P2_IMAGE_SEQUENCE.length;
