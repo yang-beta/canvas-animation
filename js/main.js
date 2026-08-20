@@ -19,10 +19,12 @@
   const sandCtx = sandCanvas.getContext("2d");
 
   const P2_IMAGE_SEQUENCE = [
-    "./img/lovers-l.png",
-    "./img/fistBump.png",
-    "./img/grandmom-l.png",
-    "./img/dog-l.png"
+    './img/frineds.png',
+    './img/hand2hand.png',
+    './img/gradny.png',
+    './img/grandpa.png',
+    './img/dog.png',
+    './img/cat.png'
   ];
 
   const P2_IMAGE_MIN_COUNT = 2;
