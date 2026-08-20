@@ -220,3 +220,17 @@ button {
 #goldenLine .ui-animate-text {
   transform: translateY(22%);
 }
+
+
+/* =============================================================
+   P2 Standalone V4｜前景沙點 Canvas
+   ============================================================= */
+#CanvasDustFront {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  z-index: 11;
+  pointer-events: none;
+}
