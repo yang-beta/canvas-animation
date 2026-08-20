@@ -48,8 +48,8 @@
     之後只需要增減 P2_IMAGE_SEQUENCE，
     不需要另外維護時間陣列。
   */
-  const P2_FIRST_IMAGE_START = 1.5;
-  const P2_IMAGE_INTERVAL = 11.5;
+  const P2_FIRST_IMAGE_START = 6.5;
+  const P2_IMAGE_INTERVAL = 10.5;
   const P2_PARTICLE_LIFETIME = 9.5;
 
   const getImageStartTime = (index) =>
@@ -1084,7 +1084,7 @@
     }));
 
     textTimeline = gsap.timeline();
-    createGroupedStoryAnimation(textTimeline, groups, 4.5);
+    createGroupedStoryAnimation(textTimeline, groups, 8.5);
 
     const goldenLine = document.getElementById("goldenLine");
 
@@ -1102,13 +1102,13 @@
       .to(goldenLine, {
         y: "0%",
         opacity: 1,
-        duration: 5.0,
+        duration: 10.0,
         ease: "power2.out"
       })
       .to("#fPart1", {
         y: "0%",
         opacity: 1,
-        duration: 8.5,
+        duration: 10.0,
         ease: "power1.out"
       }, "-=1.2")
       .to("#dot1", { y: "0%", opacity: 1, duration: .6 }, "+=.4")
@@ -1117,7 +1117,7 @@
       .to("#fPart2", {
         y: "0%",
         opacity: 1,
-        duration: 2.5,
+        duration: 5.0,
         ease: "power1.out"
       }, "+=1.5")
       .call(completeAnimation);
