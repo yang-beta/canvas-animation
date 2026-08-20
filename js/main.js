@@ -1102,7 +1102,7 @@
       .to(goldenLine, {
         y: "0%",
         opacity: 1,
-        duration: 2.5,
+        duration: 5.0,
         ease: "power2.out"
       })
       .to("#fPart1", {
