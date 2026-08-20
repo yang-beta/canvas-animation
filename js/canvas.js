@@ -14,7 +14,7 @@ window.addEventListener('resize', resizeCanvas);
 const ALL_IMAGE_SOURCES = [
     './img/frineds.png',
     './img/hand2hand.png',
-    './img/grandmom-l.png',
+    './img/gradny.png',
     './img/grandpa.png',
     './img/dog.png',
     './img/cat.png'
