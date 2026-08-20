@@ -48,13 +48,89 @@
     之後只需要增減 P2_IMAGE_SEQUENCE，
     不需要另外維護時間陣列。
   */
-  const P2_FIRST_IMAGE_START = 6.5;
-  const P2_IMAGE_INTERVAL = 10.5;
-  const P2_PARTICLE_LIFETIME = 9.5;
+  /* ===========================================================
+     P2｜文字／圖片共用時間設定 V6
+     -----------------------------------------------------------
+     前四行每行：
+       A 出現 1.0s
+       等 2.5s
+       B 出現 1.0s
+       等 2.5s
+       C 出現 1.0s
+       停留 2.5s
+     = 10.5 秒
 
-  const getImageStartTime = (index) =>
-    P2_FIRST_IMAGE_START +
-    index * P2_IMAGE_INTERVAL;
+     再等待 2.0 秒才進下一行
+     = 每一行完整週期 12.5 秒
+
+     第四行完整結束後，再等待 3 秒進最後金句。
+     =========================================================== */
+  const STORY_START_DELAY = 8.5;
+
+  const STORY_PART_REVEAL = 1.0;
+  const STORY_PART_GAP = 2.5;
+
+  const STORY_LINE_CONTENT_DURATION = 10.5;
+  const STORY_NEXT_LINE_WAIT = 2.0;
+  const STORY_LINE_CYCLE = 12.5;
+
+  const FINAL_LINE_WAIT = 3.0;
+
+  const FINAL_DOT_REVEAL = .3;
+  const FINAL_DOT_HOLD = 1.0;
+  const FINAL_TEXT_REVEAL = 1.0;
+
+  /*
+    所有沙畫圖的完整存在時間改為 12.5 秒，
+    與前四行「文字 10.5 + 等待 2」一致。
+  */
+  const P2_PARTICLE_LIFETIME = 12.5;
+
+  /*
+    六張圖的時間對應：
+      0 = 第一行
+      1 = 第二行
+      2 = 第三行
+      3 = 第四行
+      4 = 「如果思念有形狀――」
+      5 = 「卻也會沉澱在心靈中某個深處」
+  */
+  const FINAL_FIRST_START =
+    STORY_START_DELAY +
+    STORY_LINE_CYCLE * 4 +
+    FINAL_LINE_WAIT;
+
+  const FINAL_SECOND_START =
+    FINAL_FIRST_START +
+    FINAL_TEXT_REVEAL +
+    (
+      FINAL_DOT_REVEAL +
+      FINAL_DOT_HOLD
+    ) * 3;
+
+  const getImageStartTime = (index) => {
+    if (index < 4) {
+      return (
+        STORY_START_DELAY +
+        index *
+        STORY_LINE_CYCLE
+      );
+    }
+
+    if (index === 4) {
+      return FINAL_FIRST_START;
+    }
+
+    if (index === 5) {
+      return FINAL_SECOND_START;
+    }
+
+    return (
+      FINAL_SECOND_START +
+      (index - 5) *
+      P2_PARTICLE_LIFETIME
+    );
+  };
 
   const getTotalAnimationDuration = () => {
     const count = Math.max(
@@ -81,6 +157,75 @@
         `P2_IMAGE_SEQUENCE 目前有 ${count} 張；建議維持 ${P2_IMAGE_MIN_COUNT}～${P2_IMAGE_MAX_COUNT} 張。`
       );
     }
+  }
+
+  const STORY_SEGMENTS = [
+    [
+      "總毫不猶豫遞上肩膀，",
+      "比你還相信自己的摯友――",
+      "現在，你過得好嗎？"
+    ],
+    [
+      "小時候最喜歡玩",
+      "爸爸手上的老繭――",
+      "總覺得，那是英雄才會有的標記。"
+    ],
+    [
+      "餘光裡，總戴得斜斜的",
+      "老花眼鏡――",
+      "還有那雙摸得出歲月刻痕的手。"
+    ],
+    [
+      "每天下班開門時，",
+      "那個能直接把我撲倒在地的――",
+      "甜蜜重量"
+    ]
+  ];
+
+  function applyStorySegments() {
+    const lines =
+      gsap.utils.toArray(
+        "#text-container .story-line:not(#goldenLine)"
+      );
+
+    lines
+      .slice(
+        0,
+        STORY_SEGMENTS.length
+      )
+      .forEach(
+        (
+          line,
+          lineIndex
+        ) => {
+          line.innerHTML =
+            STORY_SEGMENTS[
+              lineIndex
+            ]
+              .map(
+                text =>
+                  `<span class="sub-part ui-animate-text">${text}</span>`
+              )
+              .join("");
+        }
+      );
+  }
+
+  function applyFinalLineContent() {
+    const finalLine =
+      document.getElementById(
+        "goldenLine"
+      );
+
+    if (!finalLine) return;
+
+    finalLine.innerHTML = `
+      <span class="ui-animate-text" id="fPart1">如果思念有形狀――</span>
+      <span class="dot-char ui-animate-text" id="dot1">．．．</span>
+      <span class="dot-char ui-animate-text" id="dot2">．．．</span>
+      <span class="dot-char ui-animate-text" id="dot3">．．．</span>
+      <span class="ui-animate-text" id="fPart2">卻也會沉澱在心靈中某個深處</span>
+    `;
   }
 
   let floatingDustParticles = [];
@@ -980,32 +1125,126 @@
     return sandAssetsPromise;
   }
 
-  function createGroupedStoryAnimation(timeline, groups, startDelay = 0) {
-    if (startDelay > 0) timeline.to({}, { duration: startDelay });
+  function createGroupedStoryAnimation(
+    timeline,
+    groups,
+    startDelay = 0
+  ) {
+    if (startDelay > 0) {
+      timeline.to(
+        {},
+        {
+          duration:
+            startDelay
+        }
+      );
+    }
 
-    groups.forEach(({ line, parts }) => {
-      gsap.set(line, { y: "115%", opacity: 0 });
-      gsap.set(parts, { y: "22%", opacity: 0 });
+    groups.forEach(
+      (
+        {
+          line,
+          parts
+        }
+      ) => {
+        gsap.set(
+          line,
+          {
+            y: "115%",
+            opacity: 0
+          }
+        );
 
-      timeline.to(line, {
-        y: "0%",
-        opacity: 1,
-        duration: 1,
-        ease: "power2.out"
-      });
+        gsap.set(
+          parts,
+          {
+            y: "22%",
+            opacity: 0
+          }
+        );
 
-      parts.forEach((part, index) => {
-        timeline.to(part, {
-          y: "0%",
-          opacity: 1,
-          duration: .8,
-          ease: "power1.out"
-        }, index === 0 ? "<" : "+=1.5");
-      });
+        timeline.to(
+          line,
+          {
+            y: "0%",
+            opacity: 1,
+            duration:
+              STORY_PART_REVEAL,
+            ease:
+              "power2.out"
+          }
+        );
 
-      // 正式 P2 保留前四句，但保留原本 2.3 秒節奏。
-      timeline.to({}, { duration: 2.3 });
-    });
+        timeline.to(
+          parts[0],
+          {
+            y: "0%",
+            opacity: 1,
+            duration:
+              STORY_PART_REVEAL,
+            ease:
+              "power1.out"
+          },
+          "<"
+        );
+
+        timeline.to(
+          {},
+          {
+            duration:
+              STORY_PART_GAP
+          }
+        );
+
+        timeline.to(
+          parts[1],
+          {
+            y: "0%",
+            opacity: 1,
+            duration:
+              STORY_PART_REVEAL,
+            ease:
+              "power1.out"
+          }
+        );
+
+        timeline.to(
+          {},
+          {
+            duration:
+              STORY_PART_GAP
+          }
+        );
+
+        timeline.to(
+          parts[2],
+          {
+            y: "0%",
+            opacity: 1,
+            duration:
+              STORY_PART_REVEAL,
+            ease:
+              "power1.out"
+          }
+        );
+
+        timeline.to(
+          {},
+          {
+            duration:
+              STORY_PART_GAP
+          }
+        );
+
+        timeline.to(
+          {},
+          {
+            duration:
+              STORY_NEXT_LINE_WAIT
+          }
+        );
+      }
+    );
   }
 
   function completeAnimation() {
@@ -1016,6 +1255,8 @@
   }
 
   function resetVisualState() {
+    applyStorySegments();
+    applyFinalLineContent();
     const storyLines =
       document.querySelectorAll(
         ".story-line"
@@ -1074,53 +1315,135 @@
   }
 
   function playTextSequence() {
-    const storyLines = gsap.utils.toArray(
-      "#text-container .story-line:not(#goldenLine)"
+    applyStorySegments();
+    applyFinalLineContent();
+
+    const storyLines =
+      gsap.utils.toArray(
+        "#text-container .story-line:not(#goldenLine)"
+      ).slice(0, 4);
+
+    const groups =
+      storyLines.map(
+        line => ({
+          line,
+          parts:
+            gsap.utils.toArray(
+              line.querySelectorAll(
+                ".sub-part"
+              )
+            )
+        })
+      );
+
+    textTimeline =
+      gsap.timeline();
+
+    createGroupedStoryAnimation(
+      textTimeline,
+      groups,
+      STORY_START_DELAY
     );
 
-    const groups = storyLines.map((line) => ({
-      line,
-      parts: gsap.utils.toArray(line.querySelectorAll(".sub-part"))
-    }));
-
-    textTimeline = gsap.timeline();
-    createGroupedStoryAnimation(textTimeline, groups, 8.5);
-
-    const goldenLine = document.getElementById("goldenLine");
-
-    gsap.set(goldenLine, {
-      y: "115%",
-      opacity: 0
-    });
+    const goldenLine =
+      document.getElementById(
+        "goldenLine"
+      );
 
     gsap.set(
-      goldenLine.querySelectorAll(".ui-animate-text"),
-      { y: "22%", opacity: 0 }
+      goldenLine,
+      {
+        y: "115%",
+        opacity: 0
+      }
     );
 
-    textTimeline
-      .to(goldenLine, {
+    gsap.set(
+      goldenLine.querySelectorAll(
+        ".ui-animate-text"
+      ),
+      {
+        y: "22%",
+        opacity: 0
+      }
+    );
+
+    textTimeline.to(
+      {},
+      {
+        duration:
+          FINAL_LINE_WAIT
+      }
+    );
+
+    textTimeline.to(
+      goldenLine,
+      {
         y: "0%",
         opacity: 1,
-        duration: 10.0,
-        ease: "power2.out"
-      })
-      .to("#fPart1", {
+        duration:
+          FINAL_TEXT_REVEAL,
+        ease:
+          "power2.out"
+      }
+    );
+
+    textTimeline.to(
+      "#fPart1",
+      {
         y: "0%",
         opacity: 1,
-        duration: 10.0,
-        ease: "power1.out"
-      }, "-=1.2")
-      .to("#dot1", { y: "0%", opacity: 1, duration: .6 }, "+=.4")
-      .to("#dot2", { y: "0%", opacity: 1, duration: .6 }, "+=.3")
-      .to("#dot3", { y: "0%", opacity: 1, duration: .6 }, "+=.3")
-      .to("#fPart2", {
+        duration:
+          FINAL_TEXT_REVEAL,
+        ease:
+          "power1.out"
+      },
+      "<"
+    );
+
+    [
+      "#dot1",
+      "#dot2",
+      "#dot3"
+    ].forEach(
+      selector => {
+        textTimeline.to(
+          selector,
+          {
+            y: "0%",
+            opacity: 1,
+            duration:
+              FINAL_DOT_REVEAL,
+            ease:
+              "power1.out"
+          }
+        );
+
+        textTimeline.to(
+          {},
+          {
+            duration:
+              FINAL_DOT_HOLD
+          }
+        );
+      }
+    );
+
+    textTimeline.to(
+      "#fPart2",
+      {
         y: "0%",
         opacity: 1,
-        duration: 5.0,
-        ease: "power1.out"
-      }, "+=1.5")
-      .call(completeAnimation);
+        duration:
+          FINAL_TEXT_REVEAL,
+        ease:
+          "power1.out"
+      }
+    );
+
+    textTimeline.call(
+      completeAnimation
+    );
   }
 
   function render() {
