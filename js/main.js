@@ -29,12 +29,12 @@
     );
 
   const P2_IMAGE_SEQUENCE = [
-    './img/frineds.png',
+    './img/friends.png',
     './img/hand2hand.png',
     './img/gradny.png',
     './img/grandpa.png',
     './img/dog.png',
-    './img/cat.png'
+    './img/hi5.png'
   ];
 
   const P2_IMAGE_MIN_COUNT = 2;
