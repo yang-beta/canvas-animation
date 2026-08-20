@@ -203,3 +203,20 @@ button {
     letter-spacing: .06em;
   }
 }
+
+
+/* =============================================================
+   P2 Standalone V2｜正式文字動畫結構恢復
+   ============================================================= */
+.ui-line-content {
+  transform: translateY(115%);
+  opacity: 0;
+}
+.ui-animate-text {
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.sub-part.ui-animate-text,
+#goldenLine .ui-animate-text {
+  transform: translateY(22%);
+}
