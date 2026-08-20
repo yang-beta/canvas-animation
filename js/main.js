@@ -33,6 +33,7 @@
     './img/hand2hand.png',
     './img/gradny.png',
     './img/dog.png',
+    './img/cat.png',
     './img/hi5.png'
   ];
 
