@@ -109,41 +109,32 @@
     ) * 3;
 
   const getImageStartTime = (index) => {
-    if (index < 4) {
-      return (
-        STORY_START_DELAY +
-        index *
-        STORY_LINE_CYCLE
-      );
-    }
-
-    if (index === 4) {
-      return FINAL_FIRST_START;
-    }
-
-    if (index === 5) {
-      return FINAL_SECOND_START;
-    }
-
+  if (index < 4) {
     return (
-      FINAL_SECOND_START +
-      (index - 5) *
-      P2_PARTICLE_LIFETIME
+      STORY_START_DELAY +
+      index *
+      STORY_LINE_CYCLE
     );
-  };
+  }
 
-  const getTotalAnimationDuration = () => {
-    const count = Math.max(
-      1,
-      P2_IMAGE_SEQUENCE.length
-    );
+  /*
+    第 5、6 張：
+    「如果思念有形狀――」出現時
+    左右兩張同時開始聚合。
+  */
+  if (
+    index === 4 ||
+    index === 5
+  ) {
+    return FINAL_FIRST_START;
+  }
 
-    return (
-      getImageStartTime(count - 1) +
-      P2_PARTICLE_LIFETIME +
-      .8
-    );
-  };
+  return (
+    FINAL_FIRST_START +
+    (index - 4) *
+    P2_PARTICLE_LIFETIME
+  );
+};
 
   function validateImageCount() {
     const count =
@@ -620,128 +611,156 @@
   }
 
   function createImagePlacements(imageCount) {
-    const count =
-      Math.max(
-        1,
-        imageCount
-      );
+  const count =
+    Math.max(
+      1,
+      imageCount
+    );
 
-    const text =
-      document.getElementById(
-        "text-container"
-      );
+  const text =
+    document.getElementById(
+      "text-container"
+    );
 
-    const canvasRect =
-      sandCanvas.getBoundingClientRect();
+  const canvasRect =
+    sandCanvas.getBoundingClientRect();
 
-    const textRect =
-      text?.getBoundingClientRect();
+  const textRect =
+    text?.getBoundingClientRect();
 
-    const scaleX =
-      sandCanvas.width /
-      Math.max(
-        1,
-        canvasRect.width
-      );
+  const scaleX =
+    sandCanvas.width /
+    Math.max(
+      1,
+      canvasRect.width
+    );
 
-    const scaleY =
-      sandCanvas.height /
-      Math.max(
-        1,
-        canvasRect.height
-      );
+  const scaleY =
+    sandCanvas.height /
+    Math.max(
+      1,
+      canvasRect.height
+    );
 
-    const textLeft =
-      textRect
-        ? (
-            textRect.left -
-            canvasRect.left
-          ) *
-          scaleX
-        : sandCanvas.width * .30;
+  const textLeft =
+    textRect
+      ? (
+          textRect.left -
+          canvasRect.left
+        ) *
+        scaleX
+      : sandCanvas.width * .30;
 
-    const textRight =
-      textRect
-        ? (
-            textRect.right -
-            canvasRect.left
-          ) *
-          scaleX
-        : sandCanvas.width * .70;
+  const textRight =
+    textRect
+      ? (
+          textRect.right -
+          canvasRect.left
+        ) *
+        scaleX
+      : sandCanvas.width * .70;
 
-    const textTop =
-      textRect
-        ? (
-            textRect.top -
-            canvasRect.top
-          ) *
-          scaleY
-        : sandCanvas.height * .36;
+  const textTop =
+    textRect
+      ? (
+          textRect.top -
+          canvasRect.top
+        ) *
+        scaleY
+      : sandCanvas.height * .36;
 
-    const textBottom =
-      textRect
-        ? (
-            textRect.bottom -
-            canvasRect.top
-          ) *
-          scaleY
-        : sandCanvas.height * .64;
+  const textBottom =
+    textRect
+      ? (
+          textRect.bottom -
+          canvasRect.top
+        ) *
+        scaleY
+      : sandCanvas.height * .64;
 
-    let leftCount = 0;
-    let rightCount = 0;
+  let leftCount = 0;
+  let rightCount = 0;
 
-    const placements = [];
+  const placements = [];
 
-    for (
-      let i = 0;
-      i < count;
-      i += 1
+  for (
+    let i = 0;
+    i < count;
+    i += 1
+  ) {
+    let side;
+
+    /*
+      圖 1～4：
+      維持原本左右隨機。
+
+      圖 5：
+      固定左側。
+
+      圖 6：
+      固定右側。
+    */
+    if (i === 4) {
+      side = "left";
+    } else if (i === 5) {
+      side = "right";
+    } else if (
+      leftCount -
+      rightCount >= 2
     ) {
-      let side;
-
-      /*
-        位置基本為左／右隨機。
-        若一側已經比另一側多 2 張，
-        下一張自動補到較少的一側。
-      */
-      if (leftCount - rightCount >= 2) {
-        side = "right";
-      } else if (rightCount - leftCount >= 2) {
-        side = "left";
-      } else {
-        side =
-          Math.random() < .5
-            ? "left"
-            : "right";
-      }
-
-      if (side === "left") {
-        leftCount += 1;
-      } else {
-        rightCount += 1;
-      }
-
-      const verticalBand =
-        textBottom - textTop;
-
-      const y =
-        textTop +
-        verticalBand *
-        (
-          .12 +
-          Math.random() * .76
-        );
-
-      placements.push({
-        side,
-        y,
-        textLeft,
-        textRight
-      });
+      side = "right";
+    } else if (
+      rightCount -
+      leftCount >= 2
+    ) {
+      side = "left";
+    } else {
+      side =
+        Math.random() < .5
+          ? "left"
+          : "right";
     }
 
-    return placements;
+    if (side === "left") {
+      leftCount += 1;
+    } else {
+      rightCount += 1;
+    }
+
+    const verticalBand =
+      textBottom -
+      textTop;
+
+    /*
+      前四張：
+      Y 軸維持原本隨機。
+
+      最後兩張：
+      使用同一個中央高度，
+      形成真正左右對稱的一組圖。
+    */
+    const y =
+      i >= 4
+        ? textTop +
+          verticalBand * .5
+        : textTop +
+          verticalBand *
+          (
+            .12 +
+            Math.random() *
+            .76
+          );
+
+    placements.push({
+      side,
+      y,
+      textLeft,
+      textRight
+    });
   }
+
+  return placements;
+}
 
   async function prepareAssets() {
     if (sandAssetsPromise) return sandAssetsPromise;
