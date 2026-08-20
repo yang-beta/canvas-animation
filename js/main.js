@@ -32,7 +32,6 @@
     './img/friends.png',
     './img/hand2hand.png',
     './img/gradny.png',
-    './img/grandpa.png',
     './img/dog.png',
     './img/hi5.png'
   ];
