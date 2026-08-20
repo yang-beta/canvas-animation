@@ -18,13 +18,21 @@
   const sandCanvas = document.getElementById("CanvasAnime");
   const sandCtx = sandCanvas.getContext("2d");
 
+  const frontDustCanvas =
+    document.getElementById(
+      "CanvasDustFront"
+    );
+
+  const frontDustCtx =
+    frontDustCanvas.getContext(
+      "2d"
+    );
+
   const P2_IMAGE_SEQUENCE = [
-    './img/frineds.png',
-    './img/hand2hand.png',
-    './img/gradny.png',
-    './img/grandpa.png',
-    './img/dog.png',
-    './img/cat.png'
+    "./img/lovers-l.png",
+    "./img/fistBump.png",
+    "./img/grandmom-l.png",
+    "./img/dog-l.png"
   ];
 
   const P2_IMAGE_MIN_COUNT = 2;
@@ -74,6 +82,7 @@
   }
 
   let floatingDustParticles = [];
+  let foregroundDustParticles = [];
   let sandImageParticleGroups = [];
   let sandGlobalProgress = { t: 0 };
   let sandAssetsPromise = null;
@@ -84,21 +93,74 @@
   let completed = false;
 
   function resizeCanvas() {
-    sandCanvas.width = Math.round(window.innerWidth * DPR);
-    sandCanvas.height = Math.round(window.innerHeight * DPR);
+    const width =
+      Math.round(
+        window.innerWidth * DPR
+      );
+
+    const height =
+      Math.round(
+        window.innerHeight * DPR
+      );
+
+    sandCanvas.width = width;
+    sandCanvas.height = height;
+
+    frontDustCanvas.width = width;
+    frontDustCanvas.height = height;
+
     sandAssetsPromise = null;
     sandImageParticleGroups = [];
   }
 
   class FloatingDust {
-    constructor() {
-      this.x = Math.random() * sandCanvas.width;
-      this.y = Math.random() * sandCanvas.height;
-      this.size = (Math.random() * 2.2 + .8) * DPR;
-      this.vx = (Math.random() - .5) * .8 * DPR;
-      this.vy = (Math.random() - .5) * .8 * DPR;
-      this.baseAlpha = Math.random() * .6 + .3;
-      this.pulseSpeed = Math.random() * .02 + .005;
+    constructor(isForeground = false) {
+      this.isForeground =
+        isForeground;
+
+      this.x =
+        Math.random() *
+        sandCanvas.width;
+
+      this.y =
+        Math.random() *
+        sandCanvas.height;
+
+      this.size =
+        (
+          Math.random() *
+          (
+            isForeground
+              ? 1.7
+              : 2.2
+          ) +
+          .8
+        ) *
+        DPR;
+
+      this.vx =
+        (Math.random() - .5) *
+        .8 *
+        DPR;
+
+      this.vy =
+        (Math.random() - .5) *
+        .8 *
+        DPR;
+
+      this.baseAlpha =
+        isForeground
+          ? Math.random() *
+            .28 +
+            .10
+          : Math.random() *
+            .6 +
+            .3;
+
+      this.pulseSpeed =
+        Math.random() *
+        .02 +
+        .005;
     }
 
     update() {
@@ -106,16 +168,39 @@
       this.y = (this.y + this.vy + sandCanvas.height) % sandCanvas.height;
     }
 
-    draw() {
-      sandCtx.save();
-      sandCtx.fillStyle = coralRgba(
-        "main",
-        this.baseAlpha + Math.sin(Date.now() * this.pulseSpeed) * .2
+    draw(ctx) {
+      ctx.save();
+
+      ctx.fillStyle =
+        coralRgba(
+          "main",
+          Math.max(
+            .04,
+            this.baseAlpha +
+            Math.sin(
+              Date.now() *
+              this.pulseSpeed
+            ) *
+            (
+              this.isForeground
+                ? .08
+                : .2
+            )
+          )
+        );
+
+      ctx.beginPath();
+
+      ctx.arc(
+        this.x,
+        this.y,
+        this.size,
+        0,
+        Math.PI * 2
       );
-      sandCtx.beginPath();
-      sandCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-      sandCtx.fill();
-      sandCtx.restore();
+
+      ctx.fill();
+      ctx.restore();
     }
   }
 
@@ -515,7 +600,23 @@
     if (sandAssetsPromise) return sandAssetsPromise;
 
     sandAssetsPromise = (async () => {
-      floatingDustParticles = Array.from({ length: 45 }, () => new FloatingDust());
+      /*
+        原本 45 顆 → V4 共 90 顆。
+        64 顆在文字後方、26 顆在文字前方。
+      */
+      floatingDustParticles =
+        Array.from(
+          { length: 64 },
+          () =>
+            new FloatingDust(false)
+        );
+
+      foregroundDustParticles =
+        Array.from(
+          { length: 26 },
+          () =>
+            new FloatingDust(true)
+        );
       validateImageCount();
 
       const placements =
@@ -571,45 +672,297 @@
                 )
               );
 
-            const offscreen = document.createElement("canvas");
-            offscreen.width = sandCanvas.width;
-            offscreen.height = sandCanvas.height;
+            /*
+              V4｜點描圖專用偵測
+              -----------------------------------------------------
+              舊版每隔 gap 只看一個像素，點描圖縮小後很容易
+              抽到白底；brightness < 230 也會漏掉抗鋸齒灰點。
 
-            const offCtx = offscreen.getContext("2d", { willReadFrequently: true });
-            offCtx.drawImage(
-              img,
-              finalX - imgW / 2,
-              finalY - imgH / 2,
-              imgW,
-              imgH
+              新版改成：
+              1. 只掃描圖片自身 local canvas
+              2. 每一個小區塊都檢查所有像素
+              3. 用暗點加權中心建立粒子
+            */
+            const localCanvas =
+              document.createElement(
+                "canvas"
+              );
+
+            localCanvas.width =
+              Math.max(
+                1,
+                Math.round(imgW)
+              );
+
+            localCanvas.height =
+              Math.max(
+                1,
+                Math.round(imgH)
+              );
+
+            const localCtx =
+              localCanvas.getContext(
+                "2d",
+                {
+                  willReadFrequently: true
+                }
+              );
+
+            localCtx.fillStyle =
+              "#ffffff";
+
+            localCtx.fillRect(
+              0,
+              0,
+              localCanvas.width,
+              localCanvas.height
             );
 
-            const data = offCtx.getImageData(
+            localCtx.drawImage(
+              img,
               0,
               0,
-              sandCanvas.width,
-              sandCanvas.height
-            ).data;
+              localCanvas.width,
+              localCanvas.height
+            );
+
+            const data =
+              localCtx.getImageData(
+                0,
+                0,
+                localCanvas.width,
+                localCanvas.height
+              ).data;
 
             const particles = [];
-            const gap = Math.max(2, Math.round(3 * DPR));
 
-            for (let y = 0; y < sandCanvas.height; y += gap) {
-              for (let x = 0; x < sandCanvas.width; x += gap) {
-                const pixelIndex = (y * sandCanvas.width + x) * 4;
-                const alpha = data[pixelIndex + 3];
-                const brightness =
-                  (data[pixelIndex] + data[pixelIndex + 1] + data[pixelIndex + 2]) / 3;
+            /*
+              比舊版 3*DPR 稍密，
+              讓 1～2px 的點描線條更容易被保留。
+            */
+            const gap =
+              Math.max(
+                2,
+                Math.round(
+                  2.15 * DPR
+                )
+              );
 
-                if (alpha > 50 && brightness < 230) {
-                  particles.push(
-                    new SandParticle(x, y, getImageStartTime(index))
+            /*
+              使用者提供的點描圖中，
+              有效抗鋸齒邊緣不少落在 230～248。
+              255 才是純白背景，因此提高到 248。
+            */
+            const DARK_THRESHOLD =
+              248;
+
+            const MIN_DARK_WEIGHT =
+              .20;
+
+            const canvasLeft =
+              finalX -
+              localCanvas.width /
+              2;
+
+            const canvasTop =
+              finalY -
+              localCanvas.height /
+              2;
+
+            for (
+              let y = 0;
+              y < localCanvas.height;
+              y += gap
+            ) {
+              for (
+                let x = 0;
+                x < localCanvas.width;
+                x += gap
+              ) {
+                let weightSum = 0;
+                let weightedX = 0;
+                let weightedY = 0;
+                let minBrightness = 255;
+
+                const xEnd =
+                  Math.min(
+                    x + gap,
+                    localCanvas.width
                   );
+
+                const yEnd =
+                  Math.min(
+                    y + gap,
+                    localCanvas.height
+                  );
+
+                for (
+                  let sy = y;
+                  sy < yEnd;
+                  sy += 1
+                ) {
+                  for (
+                    let sx = x;
+                    sx < xEnd;
+                    sx += 1
+                  ) {
+                    const pixelIndex =
+                      (
+                        sy *
+                        localCanvas.width +
+                        sx
+                      ) *
+                      4;
+
+                    const alpha =
+                      data[
+                        pixelIndex + 3
+                      ];
+
+                    if (alpha < 18) {
+                      continue;
+                    }
+
+                    const brightness =
+                      (
+                        data[pixelIndex] +
+                        data[pixelIndex + 1] +
+                        data[pixelIndex + 2]
+                      ) /
+                      3;
+
+                    minBrightness =
+                      Math.min(
+                        minBrightness,
+                        brightness
+                      );
+
+                    if (
+                      brightness <
+                      DARK_THRESHOLD
+                    ) {
+                      const darkWeight =
+                        Math.max(
+                          .03,
+                          (
+                            DARK_THRESHOLD -
+                            brightness
+                          ) /
+                          DARK_THRESHOLD
+                        );
+
+                      weightSum +=
+                        darkWeight;
+
+                      weightedX +=
+                        sx *
+                        darkWeight;
+
+                      weightedY +=
+                        sy *
+                        darkWeight;
+                    }
+                  }
                 }
+
+                const hasRealDot =
+                  weightSum >=
+                    MIN_DARK_WEIGHT ||
+                  minBrightness <
+                    205;
+
+                if (!hasRealDot) {
+                  continue;
+                }
+
+                const localX =
+                  weightSum > 0
+                    ? weightedX /
+                      weightSum
+                    : x +
+                      gap / 2;
+
+                const localY =
+                  weightSum > 0
+                    ? weightedY /
+                      weightSum
+                    : y +
+                      gap / 2;
+
+                const targetX =
+                  canvasLeft +
+                  localX;
+
+                const targetY =
+                  canvasTop +
+                  localY;
+
+                if (
+                  targetX <
+                    -20 * DPR ||
+                  targetX >
+                    sandCanvas.width +
+                    20 * DPR ||
+                  targetY <
+                    -20 * DPR ||
+                  targetY >
+                    sandCanvas.height +
+                    20 * DPR
+                ) {
+                  continue;
+                }
+
+                particles.push(
+                  new SandParticle(
+                    targetX,
+                    targetY,
+                    getImageStartTime(
+                      index
+                    )
+                  )
+                );
               }
             }
 
-            resolve(particles);
+            /*
+              高密度點描圖限制最大粒子數，
+              避免 6 張時手機掉幀。
+            */
+            const MAX_PARTICLES_PER_IMAGE =
+              window.innerWidth <= 768
+                ? 5200
+                : 7600;
+
+            if (
+              particles.length >
+              MAX_PARTICLES_PER_IMAGE
+            ) {
+              const reduced = [];
+
+              const step =
+                particles.length /
+                MAX_PARTICLES_PER_IMAGE;
+
+              for (
+                let p = 0;
+                p <
+                  MAX_PARTICLES_PER_IMAGE;
+                p += 1
+              ) {
+                reduced.push(
+                  particles[
+                    Math.floor(
+                      p *
+                      step
+                    )
+                  ]
+                );
+              }
+
+              resolve(reduced);
+            } else {
+              resolve(particles);
+            }
           };
 
           img.onerror = () => {
@@ -709,6 +1062,13 @@
       sandCanvas.width,
       sandCanvas.height
     );
+
+    frontDustCtx.clearRect(
+      0,
+      0,
+      frontDustCanvas.width,
+      frontDustCanvas.height
+    );
   }
 
   function playTextSequence() {
@@ -762,21 +1122,55 @@
   }
 
   function render() {
-    sandCtx.clearRect(0, 0, sandCanvas.width, sandCanvas.height);
+    sandCtx.clearRect(
+      0,
+      0,
+      sandCanvas.width,
+      sandCanvas.height
+    );
 
-    floatingDustParticles.forEach((dust) => {
-      dust.update();
-      dust.draw();
-    });
+    frontDustCtx.clearRect(
+      0,
+      0,
+      frontDustCanvas.width,
+      frontDustCanvas.height
+    );
 
-    sandImageParticleGroups.forEach((group) => {
-      group.forEach((particle) => {
-        particle.update(sandGlobalProgress.t);
-        particle.draw();
-      });
-    });
+    floatingDustParticles.forEach(
+      dust => {
+        dust.update();
+        dust.draw(sandCtx);
+      }
+    );
 
-    rafId = requestAnimationFrame(render);
+    sandImageParticleGroups.forEach(
+      group => {
+        group.forEach(
+          particle => {
+            particle.update(
+              sandGlobalProgress.t
+            );
+
+            particle.draw();
+          }
+        );
+      }
+    );
+
+    /*
+      少量前景沙點位於文字上方。
+    */
+    foregroundDustParticles.forEach(
+      dust => {
+        dust.update();
+        dust.draw(frontDustCtx);
+      }
+    );
+
+    rafId =
+      requestAnimationFrame(
+        render
+      );
   }
 
   function startRender() {
