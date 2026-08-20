@@ -76,9 +76,9 @@
 
   const FINAL_LINE_WAIT = 1.5;
 
-  const FINAL_DOT_REVEAL = .3;
+  const FINAL_DOT_REVEAL = .5;
   const FINAL_DOT_HOLD = .3;
-  const FINAL_TEXT_REVEAL = 1.0;
+  const FINAL_TEXT_REVEAL = 2.5;
 
   /*
     所有沙畫圖的完整存在時間改為 12.5 秒，
@@ -243,7 +243,7 @@
       <span class="dot-char ui-animate-text" id="dot1">..</span>
       <span class="dot-char ui-animate-text" id="dot2">..</span>
       <span class="dot-char ui-animate-text" id="dot3">..</span>
-      <span class="ui-animate-text" id="fPart2">你希望再次看見、聽見或感受什麼？</span>
+      <span class="ui-animate-text" id="fPart2">你希望再次看見、聽見或感受到什麼呢？</span>
     `;
   }
 
