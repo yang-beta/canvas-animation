@@ -49,8 +49,8 @@
     不需要另外維護時間陣列。
   */
   const P2_FIRST_IMAGE_START = 1.5;
-  const P2_IMAGE_INTERVAL = 5.6;
-  const P2_PARTICLE_LIFETIME = 7.5;
+  const P2_IMAGE_INTERVAL = 11.5;
+  const P2_PARTICLE_LIFETIME = 9.5;
 
   const getImageStartTime = (index) =>
     P2_FIRST_IMAGE_START +
@@ -1084,7 +1084,7 @@
     }));
 
     textTimeline = gsap.timeline();
-    createGroupedStoryAnimation(textTimeline, groups, 2.5);
+    createGroupedStoryAnimation(textTimeline, groups, 4.5);
 
     const goldenLine = document.getElementById("goldenLine");
 
@@ -1108,7 +1108,7 @@
       .to("#fPart1", {
         y: "0%",
         opacity: 1,
-        duration: 2.5,
+        duration: 8.5,
         ease: "power1.out"
       }, "-=1.2")
       .to("#dot1", { y: "0%", opacity: 1, duration: .6 }, "+=.4")
