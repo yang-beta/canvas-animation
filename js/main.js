@@ -68,16 +68,16 @@
   const STORY_START_DELAY = 8.5;
 
   const STORY_PART_REVEAL = 1.0;
-  const STORY_PART_GAP = 2.5;
+  const STORY_PART_GAP = 2.0;
 
-  const STORY_LINE_CONTENT_DURATION = 10.5;
-  const STORY_NEXT_LINE_WAIT = 2.0;
-  const STORY_LINE_CYCLE = 12.5;
+  const STORY_LINE_CONTENT_DURATION = 9.0;
+  const STORY_NEXT_LINE_WAIT = 1.0;
+  const STORY_LINE_CYCLE = 10.0;
 
-  const FINAL_LINE_WAIT = 3.0;
+  const FINAL_LINE_WAIT = 1.5;
 
   const FINAL_DOT_REVEAL = .3;
-  const FINAL_DOT_HOLD = 1.0;
+  const FINAL_DOT_HOLD = .3;
   const FINAL_TEXT_REVEAL = 1.0;
 
   /*
