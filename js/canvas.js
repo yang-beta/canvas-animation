@@ -12,12 +12,12 @@ window.addEventListener('resize', resizeCanvas);
 // ⚙️ 參數設定區
 // -------------------------------------------------------------
 const ALL_IMAGE_SOURCES = [
-    './pic/dog-l.png',
-    './pic/grandpa-l.png',
-    './pic/grandmom-l.png',
-    './pic/lovers-l.png',
-    './pic/kid-l.png',
-    './pic/cat-l.png'
+    './img/frineds.png',
+    './img/hand2hand.png',
+    './img/grandmom-l.png',
+    './img/grandpa.png',
+    './img/dog.png',
+    './img/cat.png'
 ];
 
 const DUST_COUNT = 80; // 常駐背景飄移金塵數量
