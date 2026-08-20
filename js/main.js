@@ -185,9 +185,9 @@
       "現在，你過得好嗎？"
     ],
     [
-      "小時候最喜歡玩",
-      "爸爸手上的老繭――",
-      "總覺得，那是英雄才會有的標記。"
+      "小時候，",
+      "最喜歡玩爸爸手上的老繭――",
+      "總覺得，那是英雄才有的標記。"
     ],
     [
       "餘光裡，總戴得斜斜的",
@@ -240,10 +240,10 @@
 
     finalLine.innerHTML = `
       <span class="ui-animate-text" id="fPart1">如果思念有形狀――</span>
-      <span class="dot-char ui-animate-text" id="dot1">．．．</span>
-      <span class="dot-char ui-animate-text" id="dot2">．．．</span>
-      <span class="dot-char ui-animate-text" id="dot3">．．．</span>
-      <span class="ui-animate-text" id="fPart2">卻也會沉澱在心靈中某個深處</span>
+      <span class="dot-char ui-animate-text" id="dot1">..</span>
+      <span class="dot-char ui-animate-text" id="dot2">..</span>
+      <span class="dot-char ui-animate-text" id="dot3">..</span>
+      <span class="ui-animate-text" id="fPart2">你希望再次看見、聽見或感受什麼？</span>
     `;
   }
 
