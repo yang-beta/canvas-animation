@@ -75,7 +75,7 @@
     draw() {
       sandCtx.save();
       sandCtx.fillStyle = coralRgba(
-        "light",
+        "main",
         this.baseAlpha + Math.sin(Date.now() * this.pulseSpeed) * .2
       );
       sandCtx.beginPath();
@@ -98,6 +98,13 @@
       this.y = this.startY;
       this.size = (Math.random() * 1 + .8) * DPR;
       this.baseAlpha = Math.random() * .65 + .35;
+      const colorRoll = Math.random();
+      this.colorLevel =
+        colorRoll < .72
+          ? "main"
+          : colorRoll < .90
+            ? "light"
+            : "deep";
       this.alpha = 0;
       this.noiseX = (Math.random() - .5) * 1.8 * DPR;
       this.noiseY = (Math.random() - .5) * 1.8 * DPR;
@@ -133,7 +140,7 @@
 
     draw() {
       if (this.alpha <= 0) return;
-      sandCtx.fillStyle = coralRgba("light", this.alpha);
+      sandCtx.fillStyle = coralRgba(this.colorLevel, this.alpha);
       sandCtx.beginPath();
       sandCtx.arc(this.x | 0, this.y | 0, this.size, 0, Math.PI * 2);
       sandCtx.fill();
@@ -225,7 +232,7 @@
 
     groups.forEach(({ line, parts }) => {
       gsap.set(line, { y: "115%", opacity: 0 });
-      gsap.set(parts, { opacity: 0 });
+      gsap.set(parts, { y: "22%", opacity: 0 });
 
       timeline.to(line, {
         y: "0%",
@@ -236,13 +243,14 @@
 
       parts.forEach((part, index) => {
         timeline.to(part, {
+          y: "0%",
           opacity: 1,
           duration: .8,
           ease: "power1.out"
         }, index === 0 ? "<" : "+=1.5");
       });
 
-      // 原站 P2 的文字保留可見，但保留原有 2.3 秒時距。
+      // 正式 P2 保留前四句，但保留原本 2.3 秒節奏。
       timeline.to({}, { duration: 2.3 });
     });
   }
@@ -293,7 +301,7 @@
     gsap.killTweensOf([storyLines, animatedParts, replayBtn, skipBtn]);
 
     gsap.set(storyLines, { y: "115%", opacity: 0 });
-    gsap.set(animatedParts, { opacity: 0 });
+    gsap.set(animatedParts, { y: "22%", opacity: 0 });
 
     gsap.set(replayBtn, {
       opacity: 0,
@@ -318,7 +326,7 @@
 
   function playTextSequence() {
     const storyLines = gsap.utils.toArray(
-      "#text-container .story-line:not(#coralLine)"
+      "#text-container .story-line:not(#goldenLine)"
     );
 
     const groups = storyLines.map((line) => ({
@@ -329,34 +337,36 @@
     textTimeline = gsap.timeline();
     createGroupedStoryAnimation(textTimeline, groups, 1.5);
 
-    const coralLine = document.getElementById("coralLine");
+    const goldenLine = document.getElementById("goldenLine");
 
-    gsap.set(coralLine, {
+    gsap.set(goldenLine, {
       y: "115%",
       opacity: 0
     });
 
     gsap.set(
-      coralLine.querySelectorAll("span"),
-      { opacity: 0 }
+      goldenLine.querySelectorAll(".ui-animate-text"),
+      { y: "22%", opacity: 0 }
     );
 
     textTimeline
-      .to(coralLine, {
+      .to(goldenLine, {
         y: "0%",
         opacity: 1,
         duration: 1.5,
         ease: "power2.out"
       })
       .to("#fPart1", {
+        y: "0%",
         opacity: 1,
         duration: 1.2,
         ease: "power1.out"
       }, "-=1.2")
-      .to("#dot1", { opacity: 1, duration: .3 }, "+=.4")
-      .to("#dot2", { opacity: 1, duration: .3 }, "+=.3")
-      .to("#dot3", { opacity: 1, duration: .3 }, "+=.3")
+      .to("#dot1", { y: "0%", opacity: 1, duration: .3 }, "+=.4")
+      .to("#dot2", { y: "0%", opacity: 1, duration: .3 }, "+=.3")
+      .to("#dot3", { y: "0%", opacity: 1, duration: .3 }, "+=.3")
       .to("#fPart2", {
+        y: "0%",
         opacity: 1,
         duration: 1.5,
         ease: "power1.out"
@@ -424,7 +434,7 @@
     sandGlobalProgress.t = totalAnimationDuration;
 
     const storyLines = gsap.utils.toArray(
-      "#text-container .story-line:not(#coralLine)"
+      "#text-container .story-line:not(#goldenLine)"
     );
 
     const storyParts = storyLines.flatMap((line) =>
@@ -437,17 +447,18 @@
     });
 
     gsap.set(storyParts, {
+      y: "0%",
       opacity: 1
     });
 
-    gsap.set("#coralLine", {
+    gsap.set("#goldenLine", {
       opacity: 1,
       y: "0%"
     });
 
     gsap.set(
       "#fPart1, #dot1, #dot2, #dot3, #fPart2",
-      { opacity: 1 }
+      { y: "0%", opacity: 1 }
     );
 
     completeAnimation();
