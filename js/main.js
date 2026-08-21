@@ -41,6 +41,21 @@
   const P2_IMAGE_MAX_COUNT = 6;
 
   /*
+    個別圖片粒子上限：
+    dog.png    保留約 4,000 顆，降低身體與耳朵的密集感。
+    gradny.png 保留約 5,200 顆，保留五官與眼鏡但減少頭髮密度。
+    其他圖片仍沿用桌機 7,600／手機 5,200 的預設上限。
+  */
+  const IMAGE_PARTICLE_LIMITS = {
+    "dog.png": 4000,
+    "gradny.png": 5200
+  };
+
+  function getImageFileName(src) {
+    return src.split("/").pop().split("?")[0];
+  }
+
+  /*
     原始四張圖起始時間：
     1.5 / 7.1 / 12.7 / 18.3 秒
     每張固定相差 5.6 秒。
@@ -1122,10 +1137,19 @@
               高密度點描圖限制最大粒子數，
               避免 6 張時手機掉幀。
             */
-            const MAX_PARTICLES_PER_IMAGE =
+            const imageFileName =
+              getImageFileName(src);
+
+            const defaultParticleLimit =
               window.innerWidth <= 768
                 ? 5200
                 : 7600;
+
+            const MAX_PARTICLES_PER_IMAGE =
+              IMAGE_PARTICLE_LIMITS[
+                imageFileName
+              ] ??
+              defaultParticleLimit;
 
             if (
               particles.length >
