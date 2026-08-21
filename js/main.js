@@ -47,8 +47,8 @@
     其他圖片仍沿用桌機 7,600／手機 5,200 的預設上限。
   */
   const IMAGE_PARTICLE_LIMITS = {
-    "dog.png": 4000,
-    "gradny.png": 5200
+    "dog.png": 3500,
+    "gradny.png": 4500
   };
 
   function getImageFileName(src) {
