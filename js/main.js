@@ -47,8 +47,9 @@
     其他圖片仍沿用桌機 7,600／手機 5,200 的預設上限。
   */
   const IMAGE_PARTICLE_LIMITS = {
-    "dog.png": 3500,
-    "gradny.png": 4500
+    "dog.png": 4000,
+    "gradny.png": 5200,
+    "friends.png": 3500
   };
 
   function getImageFileName(src) {
@@ -80,7 +81,7 @@
 
      第四行完整結束後，再等待 3 秒進最後金句。
      =========================================================== */
-  const STORY_START_DELAY = 8.5;
+  const STORY_START_DELAY = 1.5;
 
   const STORY_PART_REVEAL = 1.0;
   const STORY_PART_GAP = 2.0;

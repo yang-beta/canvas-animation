@@ -44,29 +44,49 @@
     if (!page) return null;
     const rect = page.getBoundingClientRect();
     if (!rect.width || !rect.height) return null;
+
+    /*
+      X、Y 必須使用同一個比例，否則非 16:9 視窗錄成 1920×1080
+      時，沙畫人物會被上下拉長或左右壓扁。
+    */
+    const uniformScale = Math.min(
+      CONFIG.WIDTH / rect.width,
+      CONFIG.HEIGHT / rect.height
+    );
+    const renderWidth = rect.width * uniformScale;
+    const renderHeight = rect.height * uniformScale;
+
     return {
       rect,
-      sx: CONFIG.WIDTH / rect.width,
-      sy: CONFIG.HEIGHT / rect.height
+      scale: uniformScale,
+      sx: uniformScale,
+      sy: uniformScale,
+      offsetX: (CONFIG.WIDTH - renderWidth) / 2,
+      offsetY: (CONFIG.HEIGHT - renderHeight) / 2,
+      renderWidth,
+      renderHeight
     };
   }
 
   function toExportRect(rect, scale) {
     return {
-      x: (rect.left - scale.rect.left) * scale.sx,
-      y: (rect.top - scale.rect.top) * scale.sy,
-      width: rect.width * scale.sx,
-      height: rect.height * scale.sy
+      x: scale.offsetX + (rect.left - scale.rect.left) * scale.scale,
+      y: scale.offsetY + (rect.top - scale.rect.top) * scale.scale,
+      width: rect.width * scale.scale,
+      height: rect.height * scale.scale
     };
   }
 
-  function drawSourceCanvas(id) {
+  function drawSourceCanvas(id, scale) {
     const source = document.getElementById(id);
     if (!source || !source.width || !source.height) return;
     exportCtx.drawImage(
       source,
       0, 0, source.width, source.height,
-      0, 0, CONFIG.WIDTH, CONFIG.HEIGHT
+      scale.offsetX,
+      scale.offsetY,
+      scale.renderWidth,
+      scale.renderHeight
     );
   }
 
@@ -142,9 +162,9 @@
     exportCtx.filter = "none";
     exportCtx.fillStyle = "#1a1a1a";
     exportCtx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
-    drawSourceCanvas("CanvasAnime");
+    drawSourceCanvas("CanvasAnime", scale);
     drawText(scale);
-    drawSourceCanvas("CanvasDustFront");
+    drawSourceCanvas("CanvasDustFront", scale);
   }
 
   function renderLoop() {
