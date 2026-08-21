@@ -1569,7 +1569,12 @@
     sandTimeline = gsap.to(sandGlobalProgress, {
       t: getTotalAnimationDuration(),
       duration: getTotalAnimationDuration(),
-      ease: "none"
+      ease: "none",
+      onComplete: () => {
+        window.dispatchEvent(
+          new Event("sandstory:visual-complete")
+        );
+      }
     });
 
     startRender();
@@ -1601,11 +1606,27 @@
     }
   });
 
-  resizeCanvas();
+  async function boot() {
+    resizeCanvas();
 
-  if (document.fonts?.ready) {
-    document.fonts.ready.then(play);
-  } else {
+    if (document.fonts?.ready) {
+      try {
+        await document.fonts.ready;
+      } catch (_) {}
+    }
+
+    /* 先完成圖片粒子資料，避免錄影片頭只有空白背景。 */
+    resetVisualState();
+    await prepareAssets();
+
+    if (
+      window.sandStoryExporter?.autoRecord
+    ) {
+      await window.sandStoryExporter.startRecording();
+    }
+
     play();
   }
+
+  boot();
 })();
