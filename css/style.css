@@ -101,6 +101,14 @@ button {
   opacity: 0;
 }
 
+/*
+  同一組文字仍會依序累積出現，但每個小段之間保留清楚空隙。
+  只套用前四組故事文字，不影響最後金句與省略點動畫。
+*/
+.story-line:not(#goldenLine) .sub-part:not(:last-child) {
+  margin-inline-end: .85em;
+}
+
 .dot-char {
   margin: 0 2px;
 }
@@ -180,6 +188,10 @@ button {
     font-size: 1.02rem;
     letter-spacing: .08em;
     line-height: 1.7;
+  }
+
+  .story-line:not(#goldenLine) .sub-part:not(:last-child) {
+    margin-inline-end: .65em;
   }
 
   .skip-anim-btn {
