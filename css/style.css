@@ -103,48 +103,48 @@ button {
 
 /* 前四行文字：依逗號、無標點與破折號個別設定自然間距。 */
 #text-container .ui-line-mask:nth-child(1) .sub-part:nth-child(1) {
-  margin-inline-end: .7em;
+  margin-inline-end: .5em;
 }
 
 #text-container .ui-line-mask:nth-child(1) .sub-part:nth-child(2) {
-  margin-inline-end: 1.1em;
+  margin-inline-end: .7em;
 }
 
 #text-container .ui-line-mask:nth-child(2) .sub-part:nth-child(1) {
-  margin-inline-end: .7em;
+  margin-inline-end: .5em;
 }
 
 #text-container .ui-line-mask:nth-child(2) .sub-part:nth-child(2) {
-  margin-inline-end: 1.15em;
-}
-
-#text-container .ui-line-mask:nth-child(3) .sub-part:nth-child(1) {
-  margin-inline-end: .65em;
-}
-
-#text-container .ui-line-mask:nth-child(3) .sub-part:nth-child(2) {
-  margin-inline-end: 1.1em;
-}
-
-#text-container .ui-line-mask:nth-child(4) .sub-part:nth-child(1) {
   margin-inline-end: .7em;
 }
 
+#text-container .ui-line-mask:nth-child(3) .sub-part:nth-child(1) {
+  margin-inline-end: .5em;
+}
+
+#text-container .ui-line-mask:nth-child(3) .sub-part:nth-child(2) {
+  margin-inline-end: .7em;
+}
+
+#text-container .ui-line-mask:nth-child(4) .sub-part:nth-child(1) {
+  margin-inline-end: .5em;
+}
+
 #text-container .ui-line-mask:nth-child(4) .sub-part:nth-child(2) {
-  margin-inline-end: 1.1em;
+  margin-inline-end: .7em;
 }
 
 /* 最後金句不是 .sub-part，必須另外設定各小段之間的空隙。 */
 #goldenLine #fPart1 {
-  margin-inline-end: 1.8em;
+  margin-inline-end: .7em;
 }
 
 #goldenLine .dot-char {
-  margin-inline: .35em;
+  margin-inline: .2em;
 }
 
 #goldenLine #dot3 {
-  margin-inline-end: 1.8em;
+  margin-inline-end: .7em;
 }
 
 .dot-char {
