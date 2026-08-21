@@ -106,7 +106,7 @@ button {
   只套用前四組故事文字，不影響最後金句與省略點動畫。
 */
 .story-line:not(#goldenLine) .sub-part:not(:last-child) {
-  margin-inline-end: 1.5em;
+  margin-inline-end: 1.8em;
 }
 
 .dot-char {
